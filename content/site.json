@@ -1,0 +1,68 @@
+{
+  "siteTitle": "Shivam Sharma | Data Analyst",
+  "siteDescription": "Shivam Sharma, a data analyst based in India. Excel, SQL and Power BI. Open to entry-level roles and freelance reporting work.",
+  "siteUrl": "https://forevershivam.github.io/shivam-portfolio/",
+  "theme": "teal",
+  "primaryColor": "",
+  "accentColor": "",
+  "name": "Shivam Sharma",
+  "role": "Data Analyst",
+  "location": "India",
+  "email": "shivamsharmanot@outlook.com",
+  "github": "https://github.com/forevershivam",
+  "linkedin": "https://www.linkedin.com/in/stillshivam",
+  "portrait": "",
+  "portraitAlt": "Portrait of Shivam Sharma",
+  "resume": "",
+  "home": {
+    "kicker": "DATA ANALYST / INDIA",
+    "title": "I'm Shivam Sharma, a data analyst based in India.",
+    "intro": "I use Excel, SQL and Power BI to clean data, answer practical questions and present clear findings. I'm open to entry-level roles and freelance reporting work.",
+    "focus": "Entry-level roles / Freelance reporting",
+    "workTitle": "Selected work",
+    "workIntro": "I'll share detailed project case studies here as they are ready.",
+    "skillsTitle": "Tools I use",
+    "skillsIntro": "The tools and methods I use to work with data.",
+    "contactTitle": "Have a data project or an opportunity?",
+    "contactIntro": "I'm available to discuss entry-level data roles and freelance reporting projects.",
+    "projectsEmptyMessage": "Project case studies will be added here"
+  },
+  "about": {
+    "title": "About me",
+    "paragraphs": [
+      "I'm Shivam Sharma, a data analyst based in India. I work with Excel, SQL and Power BI to organize data, investigate questions and communicate results.",
+      "I'm studying BSc Life Sciences at Indira Gandhi National Open University (IGNOU). I'm interested in practical analytical work and clear, useful reporting."
+    ],
+    "focus": "Entry-level data roles and freelance reporting"
+  },
+  "contact": {
+    "title": "Get in touch",
+    "intro": "If you're hiring for an entry-level data analyst role or need help with reporting work, you can contact me by email.",
+    "note": "Please include a short description of the role or project in your message."
+  },
+  "skills": [
+    {"category": "Spreadsheets", "items": ["Excel", "Power Query", "PivotTables"]},
+    {"category": "Data queries", "items": ["SQL"]},
+    {"category": "Reports and dashboards", "items": ["Power BI"]}
+  ],
+  "education": [
+    {"degree": "BSc Life Sciences", "institution": "Indira Gandhi National Open University (IGNOU)", "dates": ""}
+  ],
+  "privacy": [
+    {"title": "Who runs this website", "text": "This is the personal portfolio of Shivam Sharma, based in India. For privacy questions, please contact me using the email address on the Contact page."},
+    {"title": "Information you share", "text": "This website has no visitor accounts or contact form. If you email me, I receive the name, email address and any information you choose to include. I use that information to respond to your message."},
+    {"title": "Hosting and technical data", "text": "This website is hosted using GitHub Pages. The hosting provider may process technical request data, including IP addresses and server logs, to deliver the website and keep it secure. Please read GitHub's Privacy Statement for details."},
+    {"title": "Cookies and analytics", "text": "I have not added advertising trackers, marketing cookies or a visitor analytics service to this portfolio. External sites may have their own cookies and policies."},
+    {"title": "Links and documents", "text": "External links, including GitHub and LinkedIn, have their own privacy practices. A resume PDF or project screenshots may be available for download when I publish them."},
+    {"title": "Your choices", "text": "I do not sell personal information from emails sent to me. You can email me to ask about the information you shared, request a correction or request deletion, subject to applicable requirements."},
+    {"title": "Updates", "text": "I may update this policy when the website changes. The latest wording will appear on this page."}
+  ],
+  "terms": [
+    {"title": "About this site", "text": "This personal portfolio describes my education, skills and project work for general information and professional enquiries."},
+    {"title": "Accuracy", "text": "I aim to keep information accurate, but I may revise or remove content. The website may occasionally be unavailable."},
+    {"title": "Content and copyright", "text": "Original text, photographs and project materials belong to their respective owners. Please ask before reusing my original work. Linked repositories may contain separate license terms."},
+    {"title": "External services", "text": "External websites are provided for convenience. I do not control their content or availability."},
+    {"title": "Project findings", "text": "Project findings and examples are for demonstration and discussion. They do not guarantee a business outcome."},
+    {"title": "Changes and contact", "text": "I may update these terms. Questions can be sent to the email address on the Contact page. The portfolio is operated from India."}
+  ]
+}

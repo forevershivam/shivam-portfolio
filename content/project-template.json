@@ -1,0 +1,16 @@
+{
+  "title": "[ADD REAL PROJECT TITLE]",
+  "slug": "real-project-slug",
+  "published": false,
+  "order": 1,
+  "summary": "[ADD SUMMARY OF YOUR REAL PROJECT]",
+  "problem": "[WHAT PROBLEM DID YOU TRY TO SOLVE?]",
+  "dataSource": "[WHERE DID YOUR DATA COME FROM?]",
+  "tools": ["Excel", "SQL"],
+  "steps": ["[STEP 1]", "[STEP 2]"],
+  "findings": ["[REAL FINDING 1]"],
+  "workLink": "",
+  "screenshots": [
+    {"path": "", "alt": "", "caption": "[UPLOAD YOUR REAL SCREENSHOT]"}
+  ]
+}
