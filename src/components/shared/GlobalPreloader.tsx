@@ -1,182 +1,144 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { gsap } from '@/lib/gsap';
 
+export type IntroMode = 'full' | 'short';
+
 export const preloaderWords = [
-  'السلام علیکم',
   'नमस्ते',
-  'Hola',
-  'مرحباً',
-  'په خیر راغلي',
+  'Hello',
+  'નમસ્તે',
+  'নমস্কার',
   'Welcome',
-];
+] as const;
 
-const MIN_DISPLAY_MS = 1400;
-const HARD_CAP_MS = 3200;
-
-export default function GlobalPreloader({ onComplete }: { onComplete?: () => void }) {
+export default function GlobalPreloader({
+  mode = 'full',
+  onComplete,
+}: {
+  mode?: IntroMode;
+  onComplete?: () => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const curvePathRef = useRef<SVGPathElement>(null);
-  const [index, setIndex] = useState(0);
+  const pathRef = useRef<SVGPathElement>(null);
+  const [wordIndex, setWordIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [dimension, setDimension] = useState<{ width: number; height: number }>({
-    width: 1920,
-    height: 1080,
-  });
+  const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
+  const exitingRef = useRef(false);
+  const completeRef = useRef(onComplete);
+  completeRef.current = onComplete;
+  const exitRef = useRef<(skipped?: boolean) => void>(() => undefined);
 
-  const targetRef = useRef(0);
-  const displayedRef = useRef(0);
-  const fontsResolvedRef = useRef(false);
-  const loadedRef = useRef(false);
-  const startedAtRef = useRef(0);
-  const finishedRef = useRef(false);
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
-
-  const playExitAnimation = useRef(() => {});
-  playExitAnimation.current = () => {
-    if (!containerRef.current || !curvePathRef.current) {
-      onCompleteRef.current?.();
+  exitRef.current = (skipped = false) => {
+    if (exitingRef.current) return;
+    exitingRef.current = true;
+    setProgress(100);
+    const container = containerRef.current;
+    const path = pathRef.current;
+    if (!container) {
+      completeRef.current?.();
       return;
     }
 
-    const targetD = `M0 0 L${dimension.width} 0 L${dimension.width} ${dimension.height} Q${
-      dimension.width / 2
-    } ${dimension.height} 0 ${dimension.height} L0 0`;
-
+    const w = dimensions.width;
+    const h = dimensions.height;
+    const targetPath =
+      'M0 0 L' + w + ' 0 L' + w + ' ' + h + ' Q' + w / 2 + ' ' + h + ' 0 ' + h + ' L0 0';
+    const duration = skipped ? 0.32 : mode === 'short' ? 0.40 : 0.65;
     const tl = gsap.timeline({
-      onComplete: () => {
-        onCompleteRef.current?.();
-      },
+      onComplete: () => completeRef.current?.(),
     });
-
-    tl.to(curvePathRef.current, {
-      attr: { d: targetD },
-      duration: 0.7,
-      ease: 'power3.inOut',
-      delay: 0.15,
-    }).to(
-      containerRef.current,
-      {
-        yPercent: -100,
-        duration: 0.8,
-        ease: 'power4.inOut',
-      },
-      '<',
-    );
+    if (path) {
+      tl.to(path, {
+        attr: { d: targetPath },
+        duration: duration * 0.86,
+        ease: 'power3.inOut',
+      }, 0);
+    }
+    tl.to(container, { yPercent: -100, duration, ease: 'power4.inOut' }, 0);
   };
 
   useEffect(() => {
-    startedAtRef.current = performance.now();
-    document.fonts?.ready.then(() => {
-      fontsResolvedRef.current = true;
-    });
-    const onLoad = () => {
-      loadedRef.current = true;
+    const updateSize = () => {
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
     };
-    if (document.readyState === 'complete') loadedRef.current = true;
-    window.addEventListener('load', onLoad);
-
-    const capTimer = setTimeout(() => {
-      fontsResolvedRef.current = true;
-      loadedRef.current = true;
-    }, HARD_CAP_MS - MIN_DISPLAY_MS);
-
-    return () => {
-      window.removeEventListener('load', onLoad);
-      clearTimeout(capTimer);
-    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
   }, []);
 
   useEffect(() => {
-    let rafId: number;
-    const tick = () => {
-      const elapsed = performance.now() - startedAtRef.current;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      const t = window.setTimeout(() => exitRef.current(true), 120);
+      return () => window.clearTimeout(t);
+    }
 
-      let target = Math.min(90, (elapsed / MIN_DISPLAY_MS) * 88);
-      if (fontsResolvedRef.current) target = Math.max(target, 55);
-      if (loadedRef.current) target = Math.max(target, 80);
-      if (fontsResolvedRef.current && loadedRef.current && elapsed >= MIN_DISPLAY_MS) {
-        target = 100;
-      }
-
-      targetRef.current = target;
-      displayedRef.current += (targetRef.current - displayedRef.current) * 0.09;
-      const shown = displayedRef.current >= 99.5 ? 100 : displayedRef.current;
-      setProgress(shown);
-
-      if (shown === 100 && !finishedRef.current) {
-        finishedRef.current = true;
-        try {
-          sessionStorage.setItem('preloader-seen', '1');
-        } catch {}
-        setTimeout(() => playExitAnimation.current(), 180);
+    const duration = mode === 'full' ? 3150 : 650;
+    const startedAt = performance.now();
+    let raf = 0;
+    let finished = false;
+    const frame = (now: number) => {
+      const elapsed = now - startedAt;
+      setProgress(Math.min(100, Math.round((elapsed / duration) * 100)));
+      setWordIndex(mode === 'short' ? preloaderWords.length - 1 : Math.min(preloaderWords.length - 1, Math.floor((elapsed / duration) * preloaderWords.length)));
+      if (elapsed >= duration) {
+        if (!finished) {
+          finished = true;
+          exitRef.current();
+        }
         return;
       }
-      rafId = requestAnimationFrame(tick);
+      raf = window.requestAnimationFrame(frame);
     };
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, []);
+    raf = window.requestAnimationFrame(frame);
+    return () => window.cancelAnimationFrame(raf);
+  }, [mode]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setDimension({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    if (finishedRef.current) return;
-    if (index === preloaderWords.length - 1) return;
-    const timeout = setTimeout(
-      () => {
-        setIndex((prev) => prev + 1);
-      },
-      index === 0 ? 380 : 280,
-    );
-    return () => clearTimeout(timeout);
-  }, [index]);
-
-  const initialPath = `M0 0 L${dimension.width} 0 L${dimension.width} ${dimension.height} Q${
-    dimension.width / 2
-  } ${dimension.height + 300} 0 ${dimension.height} L0 0`;
+  const initialPath =
+    'M0 0 L' + dimensions.width + ' 0 L' + dimensions.width + ' ' + dimensions.height +
+    ' Q' + dimensions.width / 2 + ' ' + (dimensions.height + 300) +
+    ' 0 ' + dimensions.height + ' L0 0';
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#0B110E] cursor-wait text-cream select-none pointer-events-auto"
+      role="status"
+      aria-label="Loading portfolio"
+      className="fixed inset-0 z-[99999] flex select-none items-center justify-center bg-[#0B110E] text-[#E2E8E4]"
       style={{ willChange: 'transform' }}
     >
       <div
-        className="flex items-center text-3xl sm:text-4xl md:text-5xl font-display font-medium text-cream z-10 transition-opacity duration-700 opacity-90"
+        key={wordIndex}
+        className="intro-handwriting relative z-10 max-w-[85vw] text-center text-[clamp(2.6rem,7vw,5.1rem)] leading-tight text-[#E2E8E4]"
+        style={{ fontFamily: "'Noto Sans Devanagari', 'Noto Sans Gujarati', 'Noto Sans Bengali', 'Instrument Serif', system-ui, sans-serif", animationDuration: mode === 'short' ? '0.34s' : undefined }}
       >
-        <p className="tracking-wide">{preloaderWords[index]}</p>
+        {preloaderWords[wordIndex]}
       </div>
 
-      <div className="absolute bottom-8 left-8 z-10 flex items-baseline gap-3 font-mono" aria-hidden="true">
-        <span className="text-accent text-sm uppercase tracking-widest">loading</span>
-        <span className="text-cream text-lg tabular-nums">{Math.round(progress)}%</span>
+      <div className="absolute bottom-8 left-6 z-10 flex items-baseline gap-3 font-mono sm:left-8" aria-hidden="true">
+        <span className="text-xs uppercase tracking-widest text-accent sm:text-sm">Loading</span>
+        <span className="text-base tabular-nums sm:text-lg">{progress}%</span>
       </div>
+
+      <button
+        type="button"
+        onClick={() => exitRef.current(true)}
+        className="absolute bottom-7 right-6 z-20 rounded-full border border-accent/60 px-4 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent sm:right-8"
+        aria-label="Skip Animation"
+      >
+        Skip Animation
+      </button>
 
       <div
-        className="absolute bottom-0 left-0 h-[2px] w-full origin-left bg-accent z-10"
-        style={{ transform: `scaleX(${progress / 100})` }}
+        className="absolute bottom-0 left-0 z-10 h-[2px] w-full origin-left bg-accent"
+        style={{ transform: 'scaleX(' + progress / 100 + ')' }}
         aria-hidden="true"
       />
 
-      <svg className="absolute top-0 -z-10 h-[calc(100%+300px)] w-full pointer-events-none">
-        <path
-          ref={curvePathRef}
-          className="fill-[#141516]"
-          d={initialPath}
-        />
+      <svg aria-hidden="true" className="pointer-events-none absolute left-0 top-0 h-[calc(100%+300px)] w-full">
+        <path ref={pathRef} d={initialPath} fill="#0B110E" />
       </svg>
     </div>
   );

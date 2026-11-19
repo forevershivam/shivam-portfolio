@@ -6,9 +6,63 @@ import ScrollWordReveal from '@/components/ui/ScrollWordReveal';
 import AnimatedHeading from '@/components/ui/AnimateHeading';
 import FlowField from '@/components/canvas/FlowField';
 
-const CREDENTIALS=[
- {year:'2026',title:'Microsoft Excel Beginners to Advance',organization:'SkillCourse',stat:'Certificate issued September 2026',type:'Certification'},
- {year:'2025–Present',title:'B.Sc. Life Sciences',organization:'Indira Gandhi National Open University',stat:'Botany, Zoology & Chemistry',type:'Education'},
+const CREDENTIALS = [
+  {
+    year: 'MAR 2023',
+    title: 'Completed Class 12th',
+    organization: 'Higher Secondary Education',
+    stat: 'Completed Class 12 and began preparing for medical entrance exams.',
+    type: 'Education',
+  },
+  {
+    year: '2023–2024',
+    title: 'First NEET Drop',
+    organization: 'NEET Preparation',
+    stat: 'Dedicated the year to NEET preparation; did not secure selection.',
+    type: 'Preparation',
+  },
+  {
+    year: '2024–2025',
+    title: 'Second NEET Drop + IPU CET',
+    organization: 'NEET & IPU CET (Paramedical)',
+    stat: 'Continued NEET preparation and appeared for IPU CET Paramedical.',
+    type: 'Preparation',
+  },
+  {
+    year: 'MAY 2025',
+    title: 'IPU CET — Rank 552',
+    organization: 'IPU CET (Paramedical)',
+    stat: 'Secured rank 552. Chose not to participate in counselling.',
+    type: 'Achievement',
+  },
+  {
+    year: 'JUN 2025',
+    title: 'B.Sc. Life Sciences',
+    organization: 'Indira Gandhi National Open University',
+    stat: 'Joined B.Sc. Life Sciences (Botany, Zoology and Chemistry) while continuing NEET preparation.',
+    type: 'Education',
+  },
+  {
+    year: 'JAN 2026',
+    title: 'Concluded NEET Preparation',
+    organization: 'Career Turning Point',
+    stat: 'Decided to move beyond medical entrance preparation and reconsider my career direction.',
+    type: 'Transition',
+  },
+  {
+    year: 'AUG 2026',
+    title: 'Switched My Career to Data Analytics',
+    organization: 'A New Professional Direction',
+    stat: 'Began building practical skills in Excel, SQL, MIS Reporting and business analysis.',
+    type: 'Career Switch',
+  },
+  {
+    year: '2026–PRESENT',
+    title: 'The Journey Continues...',
+    organization: 'Learning • Building • Growing',
+    stat: 'Developing my Data Analytics, MIS Reporting and Business Intelligence skills while exploring entry-level opportunities.',
+    type: 'Current Chapter',
+  },
 ];
 
 const About = () => {
@@ -234,7 +288,7 @@ const About = () => {
           <div ref={tableRef} className="pt-12 md:pt-20 border-t border-white/10">
             <div className="mb-12 text-center md:mb-20">
               <span className="cred-section-label font-mono text-sm sm:text-base md:text-base text-warm uppercase tracking-[0.3em] font-medium inline-block opacity-0">
-                (Education & Certifications)
+                (Education & Career Journey)
               </span>
               <h3 className="mt-5 font-display text-[clamp(2.5rem,7vw,6.5rem)] font-black uppercase tracking-tight leading-none text-light">
                 <span className="experience-word inline-block overflow-hidden align-top"><span className="block">The</span></span>{' '}

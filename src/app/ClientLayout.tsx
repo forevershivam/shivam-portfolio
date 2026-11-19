@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
-import GlobalPreloader from '@/components/shared/GlobalPreloader';
+import GlobalPreloader, { type IntroMode } from '@/components/shared/GlobalPreloader';
 import CustomCursor from '@/components/shared/CustomCursor';
 import Providers from './providers';
 
@@ -12,45 +12,51 @@ declare global {
   }
 }
 
+const LAST_FULL_INTRO_KEY = 'shivam-portfolio-last-full-intro';
+const FULL_INTRO_INTERVAL = 5 * 60 * 1000;
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
-  const [instantDone, setInstantDone] = useState(false);
   const [showCursor, setShowCursor] = useState(false);
+  const [mode, setMode] = useState<IntroMode>('full');
 
   useEffect(() => {
-let seen = false;
+    // Browser refresh within five minutes gets a short intro.
+    // A first visit or a return after five minutes gets the full sequence.
     try {
-      seen = sessionStorage.getItem('preloader-seen') === '1';
-    } catch {}
-
-    if (seen) {
-      window.__preloaderDone = true;
-      document.body.classList.remove('preloader-active');
-      setInstantDone(true);
-      setIsLoading(false);
-      setShowCursor(true);
-      requestAnimationFrame(() => {
-        window.dispatchEvent(new CustomEvent('preloaderComplete'));
-      });
+      const saved = Number(localStorage.getItem(LAST_FULL_INTRO_KEY));
+      if (Number.isFinite(saved) && saved > 0 &&
+        Date.now() >= saved && Date.now() - saved < FULL_INTRO_INTERVAL) {
+        setMode('short');
+      }
+    } catch {
+      // Storage can be disabled; use the full intro.
     }
   }, []);
 
   const handleExitComplete = useCallback(() => {
+    if (mode === 'full') {
+      try {
+        localStorage.setItem(LAST_FULL_INTRO_KEY, String(Date.now()));
+      } catch {
+        // Local storage is optional.
+      }
+    }
+
     setIsLoading(false);
     document.body.classList.remove('preloader-active');
-    window.scrollTo(0, 0);
-    setShowCursor(true);
     window.__preloaderDone = true;
+    setShowCursor(true);
     window.dispatchEvent(new CustomEvent('preloaderComplete'));
-  }, []);
+  }, [mode]);
 
   return (
     <>
       <div className="film-grain pointer-events-none" aria-hidden="true" />
       {showCursor && <CustomCursor />}
 
-      {!instantDone && isLoading && (
-        <GlobalPreloader onComplete={handleExitComplete} />
+      {isLoading && (
+        <GlobalPreloader key={mode} mode={mode} onComplete={handleExitComplete} />
       )}
 
       <SmoothScrollProvider>

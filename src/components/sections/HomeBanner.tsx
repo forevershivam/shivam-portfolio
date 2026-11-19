@@ -127,18 +127,18 @@ export default function HomeBanner() {
     <section
       ref={sectionRef}
       id="top"
-      className="shivam-hero relative flex min-h-[100dvh] items-center overflow-hidden bg-[#0A0F0D] px-6 pb-24 pt-32 text-[#E2E8E4] sm:px-8 md:px-12 md:pb-28 lg:px-16"
+      className="shivam-hero relative flex min-h-[100dvh] items-center overflow-hidden bg-[#E2E8E4] px-6 pb-24 pt-32 text-[#0A0F0D] sm:px-8 md:px-12 md:pb-28 lg:px-16"
     >
-      <FlowField />
+      <FlowField light />
       <div
-        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-[#0A0F0D]/80 via-transparent to-[#0A0F0D]/25"
+        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-[#E2E8E4]/75 via-transparent to-[#E2E8E4]/20"
         aria-hidden="true"
       />
 
       <div ref={innerRef} className="relative z-10 mx-auto w-full max-w-6xl">
         <div
           ref={statusRef}
-          className="mb-8 inline-flex items-center gap-3 rounded-full border border-[#274439] bg-[#0D1B15]/85 px-4 py-2 font-mono text-xs text-[#34D399] sm:text-sm"
+          className="mb-8 inline-flex items-center gap-3 rounded-full border border-[#ADCBB9] bg-white/65 px-4 py-2 font-mono text-xs text-[#147953] sm:text-sm"
         >
           <span className="h-2 w-2 animate-pulse rounded-full bg-[#34D399]" aria-hidden="true" />
           Open to entry-level roles
@@ -167,13 +167,13 @@ export default function HomeBanner() {
 
         <p
           ref={descriptionRef}
-          className="mb-7 max-w-[680px] font-sans text-base leading-relaxed text-[#B4C4BB] sm:text-lg md:text-xl"
+          className="mb-7 max-w-[680px] font-sans text-base leading-relaxed text-[#45524B] sm:text-lg md:text-xl"
         >
           Fresher Data Analyst who cleans messy records, writes SQL and creates clear Excel dashboards
           and MIS reports. Currently learning Power BI.
           <span className="mt-2 block">
-            <strong className="font-semibold text-[#E2E8E4]">47 WPM typing speed · 98% accuracy</strong>
-            <span className="text-[#9DB1A5]"> (1-minute test)</span>
+            <strong className="font-semibold text-[#0A0F0D]">47 WPM typing speed · 98% accuracy</strong>
+            <span className="text-[#596C61]"> (1-minute test)</span>
           </span>
         </p>
 
@@ -185,7 +185,7 @@ export default function HomeBanner() {
           {jobRoles.map((role) => (
             <li
               key={role}
-              className="rounded-full border border-[#2A3B32] bg-[#101B16]/90 px-4 py-2 text-xs font-semibold text-[#E2E8E4] transition-colors duration-300 hover:border-[#34D399]/70 hover:text-[#34D399] sm:text-sm"
+              className="rounded-full border border-[#BAC8C0] bg-white/75 px-4 py-2 text-xs font-semibold text-[#24372C] transition-colors duration-300 hover:border-[#078456]/70 hover:text-[#078456] sm:text-sm"
             >
               {role}
             </li>
@@ -205,7 +205,7 @@ export default function HomeBanner() {
             topText="Contact me"
             bottomText="Say hello →"
             variant="outline"
-            className="!border-[#34D399] !text-[#34D399]"
+            className="!border-[#0E9262] !text-[#0B6848]"
           />
         </div>
       </div>

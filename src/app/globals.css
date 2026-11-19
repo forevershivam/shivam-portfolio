@@ -275,3 +275,31 @@ body:has(.shivam-hero) .home-aware-nav a:hover,
 body:has(.shivam-hero) .home-aware-nav a:focus-visible {
   color: #34D399 !important;
 }
+
+/* Handwriting-inspired welcome reveal; keeps script glyphs intact. */
+.intro-handwriting {
+  animation: intro-handwriting-reveal 0.56s cubic-bezier(.19, 1, .22, 1) both;
+  will-change: clip-path, opacity, transform;
+}
+
+@keyframes intro-handwriting-reveal {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    filter: blur(3px);
+    opacity: 0.5;
+    transform: translateY(5px);
+  }
+  86% {
+    filter: blur(0);
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-handwriting { animation: none !important; }
+}
