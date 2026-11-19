@@ -110,11 +110,9 @@ export default function GlobalPreloader({
       style={{ willChange: 'transform' }}
     >
       <div
-        key={wordIndex}
-        className="intro-handwriting relative z-10 max-w-[85vw] text-center text-[clamp(2.6rem,7vw,5.1rem)] leading-tight text-[#E2E8E4]"
-        style={{ fontFamily: "'Noto Sans Devanagari', 'Noto Sans Gujarati', 'Noto Sans Bengali', 'Instrument Serif', system-ui, sans-serif", animationDuration: mode === 'short' ? '0.34s' : undefined }}
+        className="relative z-10 flex max-w-[85vw] items-center text-center text-3xl sm:text-4xl md:text-5xl font-display font-medium text-cream transition-opacity duration-700 opacity-90"
       >
-        {preloaderWords[wordIndex]}
+        <p key={wordIndex} className="tracking-wide">{preloaderWords[wordIndex]}</p>
       </div>
 
       <div className="absolute bottom-8 left-6 z-10 flex items-baseline gap-3 font-mono sm:left-8" aria-hidden="true">
