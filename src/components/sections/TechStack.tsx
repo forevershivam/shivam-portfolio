@@ -195,7 +195,7 @@ const TechStack = () => {
                   {stack.title}
                 </h3>
                 <span className="font-mono text-xs text-warm tracking-widest uppercase block mt-2">
-                  {stack.technologies.length} Technologies
+                  {stack.technologies.length} Skills
                 </span>
               </div>
 
@@ -224,6 +224,35 @@ const TechStack = () => {
               </div>
             </div>
           ))}
+
+        </div>
+
+        <div className="mt-14 rounded-2xl border border-accent/30 bg-surface-mid/80 p-6 sm:p-8">
+          <div className="mb-5">
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">
+              Typing performance
+            </p>
+            <h3 className="mt-2 font-display text-2xl font-semibold text-cream sm:text-3xl">
+              Speed &amp; accuracy
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:gap-8">
+            <div>
+              <p className="font-mono text-4xl font-semibold text-accent sm:text-5xl">
+                47 <span className="text-sm text-cream">WPM</span>
+              </p>
+              <p className="mt-2 text-sm text-gray-soft">Typing speed</p>
+            </div>
+            <div>
+              <p className="font-mono text-4xl font-semibold text-accent sm:text-5xl">
+                98%
+              </p>
+              <p className="mt-2 text-sm text-gray-soft">Accuracy</p>
+            </div>
+          </div>
+          <p className="mt-5 text-xs text-gray-soft">
+            Result from a 1-minute typing test.
+          </p>
         </div>
       </div>
     </section>

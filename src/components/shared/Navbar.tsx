@@ -676,7 +676,7 @@ const Navbar: React.FC<NavbarProps> = ({ hamburgerOnly = false }) => {
       {!hamburgerOnly && (
         <nav
           ref={navRef}
-          className="hidden md:block fixed w-full py-6 z-50 bg-transparent"
+          className="home-aware-nav hidden md:block fixed w-full py-6 z-50 bg-transparent"
           style={navStyle}
         >
           <div className="w-full px-6 sm:px-8 md:px-12 lg:px-16 flex justify-between items-center">
@@ -706,7 +706,7 @@ const Navbar: React.FC<NavbarProps> = ({ hamburgerOnly = false }) => {
       {!hamburgerOnly && (
         <nav
           ref={mobileNavRef}
-          className="mobile-navbar md:hidden fixed w-full z-50 bg-transparent"
+          className="home-aware-nav mobile-navbar md:hidden fixed w-full z-50 bg-transparent"
           style={navStyle}
         >
           <div className="flex justify-between items-center px-6 sm:px-8 h-20 w-full">

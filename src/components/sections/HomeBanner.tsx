@@ -1,342 +1,218 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { gsap, ScrollTrigger, SplitText, useGSAP } from '@/lib/gsap';
+import React, { useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { gsap, SplitText, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import AnimatedButton from '@/components/ui/AnimatedButton';
-import Magnetic from '@/components/ui/Magnetic';
-import { EASE } from '@/lib/motion';
-import { site } from '@/lib/site';
+import MarqueeStrip from '@/components/sections/MarqueeStrip';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { site } from '@/lib/site';
 
-const AmbientGeometry = dynamic(() => import('@/components/canvas/AmbientGeometry'), {
-  ssr: false,
-});
+const FlowField = dynamic(() => import('@/components/canvas/FlowField'), { ssr: false });
 
-const RoleTicker = () => {
-  const roles = site.roles;
-  const [currentIdx, setCurrentIdx] = useState<number>(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
+const jobRoles = [
+  'Back Office Executive',
+  'MIS Executive',
+  'Associate Analyst',
+  'Data Entry',
+] as const;
 
-  useEffect(() => {
-    if (reduced) return;
-    const interval = setInterval(() => {
-      const wrapper = containerRef.current;
-      if (!wrapper) return;
-      const currentWord = wrapper.querySelector('.ticker-word-current');
-      const nextWord = wrapper.querySelector('.ticker-word-next');
-      if (currentWord && nextWord) {
-        gsap.set(nextWord, { yPercent: 100 });
-        gsap.to(currentWord, { yPercent: -100, duration: 0.4, ease: EASE.outCubic });
-        gsap.to(nextWord, {
-          yPercent: 0,
-          duration: 0.4,
-          ease: EASE.outCubic,
-          onComplete: () => {
-            setCurrentIdx((prev) => (prev + 1) % roles.length);
-            gsap.set(currentWord, { yPercent: 0 });
-          },
-        });
-      }
-    }, 2600);
-    return () => clearInterval(interval);
-  }, [roles.length, reduced]);
-
-  const nextIdx = (currentIdx + 1) % roles.length;
-  return (
-    <div className="h-6 overflow-hidden mb-8 flex justify-center items-center select-none">
-      <div
-        ref={containerRef}
-        className="relative h-6 w-80 text-center font-mono text-sm uppercase tracking-widest text-accent"
-      >
-        <div className="ticker-word-current absolute inset-0 flex items-center justify-center">
-          {roles[currentIdx]}
-        </div>
-        <div className="ticker-word-next absolute inset-0 flex items-center justify-center translate-y-full">
-          {roles[nextIdx]}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const StampBadge = ({ onClick }: { onClick: () => void }) => (
-  <Magnetic strength={0.35}>
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Scroll to contact section"
-      className="group relative w-28 h-28 lg:w-36 lg:h-36 rounded-full grid place-items-center select-none"
-    >
-      <svg viewBox="0 0 200 200" className="stamp-disc absolute inset-0 w-full h-full" aria-hidden="true">
-        <defs>
-          <path id="stamp-circle" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" />
-        </defs>
-        <text
-          className="fill-charcoal font-mono uppercase"
-          style={{ fontSize: '15.5px', letterSpacing: '0.305em' }}
-        >
-          <textPath href="#stamp-circle">
-            AVAILABLE FOR WORK • LET&apos;S BUILD • 
-          </textPath>
-        </text>
-      </svg>
-      <span className="grid place-items-center w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-accent text-white transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-45">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M7 7l10 10M17 7v10H7" />
-        </svg>
-      </span>
-    </button>
-  </Magnetic>
-);
-
-const HomeBanner = () => {
-  const nameRef = useRef<HTMLHeadingElement>(null);
-  const paragraphRef = useRef<HTMLParagraphElement>(null);
-  const tickerRef = useRef<HTMLDivElement>(null);
+export default function HomeBanner() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const rolesRef = useRef<HTMLUListElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
-  const stampRef = useRef<HTMLDivElement>(null);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const innerContentRef = useRef<HTMLDivElement>(null);
-  const spotlightRef = useRef<HTMLDivElement>(null);
-  const splitsRef = useRef<SplitText[]>([]);
-  const hasPlayedRef = useRef(false);
   const reduced = useReducedMotion();
 
-  const playIntro = useCallback(() => {
-    if (reduced || !nameRef.current || hasPlayedRef.current) return;
-    hasPlayedRef.current = true;
+  useEffect(() => {
+    const heading = headingRef.current;
+    if (!heading || reduced) return;
 
-    const lines = nameRef.current.querySelectorAll<HTMLElement>('[data-hero-line]');
-    const chars: HTMLElement[] = [];
-    splitsRef.current.forEach((s) => s.revert());
-    splitsRef.current = [];
-    lines.forEach((line) => {
-      const split = SplitText.create(line, { type: 'chars', charsClass: 'hero-char' });
-      splitsRef.current.push(split);
-      chars.push(...(split.chars as HTMLElement[]));
-    });
-
-    gsap.set(chars, {
-      yPercent: 125,
-      rotateX: -70,
-      opacity: 0,
-      transformPerspective: 900,
-      transformOrigin: '50% 100%',
-    });
-    gsap.set([paragraphRef.current, tickerRef.current], { y: 34, opacity: 0 });
-    gsap.set(buttonsRef.current?.children ?? [], { y: 26, opacity: 0, scale: 0.96 });
-    gsap.set(stampRef.current, { scale: 0, rotate: -30, opacity: 0 });
-
-    const tl = gsap.timeline({ defaults: { ease: EASE.outQuart }, delay: 0.05 });
-    tl.to(chars, {
-      yPercent: 0,
-      rotateX: 0,
-      opacity: 1,
-      duration: 1,
-      stagger: { each: 0.026, from: 'start' },
-    })
-      .to(paragraphRef.current, { y: 0, opacity: 1, duration: 0.75, ease: EASE.outCubic }, '-=0.55')
-      .to(tickerRef.current, { y: 0, opacity: 1, duration: 0.6, ease: EASE.outCubic }, '-=0.5')
-      .to(
-        buttonsRef.current?.children ?? [],
-        { y: 0, opacity: 1, scale: 1, duration: 0.6, stagger: 0.08, ease: 'back.out(1.6)' },
-        '-=0.45'
-      )
-      .to(stampRef.current, { scale: 1, rotate: 0, opacity: 1, duration: 0.9, ease: 'elastic.out(1, 0.55)' }, '-=0.6');
-
-    const enterHandler = () => {
-      gsap.to(chars, {
-        keyframes: [{ yPercent: -9, duration: 0.22 }, { yPercent: 0, duration: 0.5 }],
-        ease: EASE.outQuad,
-        stagger: { each: 0.016, from: 'center' },
-        overwrite: 'auto',
+    const splits: SplitText[] = [];
+    const characters: HTMLElement[] = [];
+    heading.querySelectorAll<HTMLElement>('[data-hero-line]').forEach((element) => {
+      const split = SplitText.create(element, {
+        type: 'chars',
+        charsClass: 'hero-char',
       });
-    };
-    nameRef.current.addEventListener('mouseenter', enterHandler);
-    return () => nameRef.current?.removeEventListener('mouseenter', enterHandler);
-  }, [reduced]);
-
-  useEffect(() => {
-    if (reduced || !nameRef.current) {
-      if (reduced) {
-        gsap.set([paragraphRef.current, tickerRef.current], { clearProps: 'all' });
-      }
-      return;
-    }
-    if (typeof window !== 'undefined' && window.__preloaderDone === true) {
-      const cleanup = playIntro();
-      return cleanup;
-    }
-
-    const lines = nameRef.current.querySelectorAll<HTMLElement>('[data-hero-line]');
-    const chars: HTMLElement[] = [];
-    splitsRef.current.forEach((s) => s.revert());
-    splitsRef.current = [];
-    lines.forEach((line) => {
-      const split = SplitText.create(line, { type: 'chars', charsClass: 'hero-char' });
-      splitsRef.current.push(split);
-      chars.push(...(split.chars as HTMLElement[]));
+      splits.push(split);
+      characters.push(...(split.chars as HTMLElement[]));
     });
 
-    gsap.set(chars, {
-      yPercent: 125,
-      rotateX: -70,
+    const otherElements = [
+      statusRef.current,
+      descriptionRef.current,
+      rolesRef.current,
+      buttonsRef.current,
+    ].filter(Boolean);
+
+    gsap.set(characters, {
       opacity: 0,
-      transformPerspective: 900,
+      yPercent: 105,
+      rotateX: -55,
+      transformPerspective: 800,
       transformOrigin: '50% 100%',
     });
-    gsap.set([paragraphRef.current, tickerRef.current], { y: 34, opacity: 0 });
-    gsap.set(buttonsRef.current?.children ?? [], { y: 26, opacity: 0, scale: 0.96 });
-    gsap.set(stampRef.current, { scale: 0, rotate: -30, opacity: 0 });
-  }, [reduced, playIntro]);
+    gsap.set(otherElements, { opacity: 0, y: 28 });
 
-  useEffect(() => {
-    const handlePreloaderComplete = () => {
-      playIntro();
+    let intro: gsap.core.Timeline | undefined;
+    let played = false;
+    const playIntro = () => {
+      if (played) return;
+      played = true;
+      intro = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      intro
+        .to(characters, {
+          opacity: 1,
+          yPercent: 0,
+          rotateX: 0,
+          duration: 0.82,
+          stagger: 0.026,
+        })
+        .to(otherElements, {
+          opacity: 1,
+          y: 0,
+          duration: 0.72,
+          stagger: 0.1,
+        }, '-=0.36');
     };
-    window.addEventListener('preloaderComplete', handlePreloaderComplete);
-    return () => window.removeEventListener('preloaderComplete', handlePreloaderComplete);
-  }, [playIntro]);
 
-  useEffect(() => {
-    if (reduced) return;
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!spotlightRef.current || !sectionRef.current) return;
-      const rect = sectionRef.current.getBoundingClientRect();
-      spotlightRef.current.style.setProperty('--x', `${e.clientX - rect.left}px`);
-      spotlightRef.current.style.setProperty('--y', `${e.clientY - rect.top}px`);
-      gsap.to(spotlightRef.current, { opacity: 1, duration: 0.5, overwrite: 'auto' });
-    };
-    const handleMouseLeave = () => {
-      gsap.to(spotlightRef.current, { opacity: 0, duration: 0.8, overwrite: 'auto' });
-    };
-    const section = sectionRef.current;
-    if (section) {
-      section.addEventListener('mousemove', handleMouseMove);
-      section.addEventListener('mouseleave', handleMouseLeave);
-    }
+    window.addEventListener('preloaderComplete', playIntro);
+    if (window.__preloaderDone) playIntro();
+    // Fallback if the preloader was skipped or its event was missed.
+    const fallback = window.setTimeout(playIntro, 4200);
+
     return () => {
-      if (section) {
-        section.removeEventListener('mousemove', handleMouseMove);
-        section.removeEventListener('mouseleave', handleMouseLeave);
-      }
+      window.clearTimeout(fallback);
+      window.removeEventListener('preloaderComplete', playIntro);
+      intro?.kill();
+      gsap.set(otherElements, { clearProps: 'all' });
+      splits.forEach((split) => split.revert());
     };
   }, [reduced]);
 
   useGSAP(
     () => {
-      if (reduced || !sectionRef.current || !innerContentRef.current) return;
+      if (reduced || !sectionRef.current || !innerRef.current) return;
       const trigger = ScrollTrigger.create({
         trigger: sectionRef.current,
         start: 'top top',
         end: 'bottom top',
         scrub: true,
-        animation: gsap.to(innerContentRef.current, { y: '-15vh', ease: 'none' }),
+        animation: gsap.to(innerRef.current, {
+          y: '-10vh',
+          ease: 'none',
+        }),
       });
       return () => trigger.kill();
     },
     { scope: sectionRef, dependencies: [reduced] },
   );
 
-  const handleScroll = (id: string) => {
-    const section = document.getElementById(id);
-    if (!section) return;
-    if ((window as any).__lenis) {
-      (window as any).__lenis.scrollTo(section, { offset: 0, duration: 1.2 });
+  const scrollTo = (id: string) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    const smooth = (window as typeof window & { __lenis?: { scrollTo: (target: HTMLElement, opts?: object) => void } }).__lenis;
+    if (smooth && !reduced) {
+      smooth.scrollTo(element, { duration: 1.1 });
     } else {
-      section.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
     }
   };
 
   return (
     <section
       ref={sectionRef}
-      className="min-h-[100dvh] md:min-h-screen px-6 sm:px-8 md:px-12 lg:px-16 pt-28 pb-8 md:pt-20 md:pb-0 bg-cream flex items-center relative overflow-hidden"
+      id="top"
+      className="shivam-hero relative flex min-h-[100dvh] items-center overflow-hidden bg-[#0A0F0D] px-6 pb-24 pt-32 text-[#E2E8E4] sm:px-8 md:px-12 md:pb-28 lg:px-16"
     >
-      <AmbientGeometry />
+      <FlowField />
+      <div
+        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-[#0A0F0D]/80 via-transparent to-[#0A0F0D]/25"
+        aria-hidden="true"
+      />
 
-      {!reduced && (
+      <div ref={innerRef} className="relative z-10 mx-auto w-full max-w-6xl">
         <div
-          ref={spotlightRef}
-          className="absolute inset-0 pointer-events-none z-[1] opacity-0"
-          style={{
-            background: 'radial-gradient(400px circle at var(--x, 0px) var(--y, 0px), rgba(196, 93, 62, 0.07), transparent 85%)',
-            willChange: 'opacity',
-          }}
-        />
-      )}
+          ref={statusRef}
+          className="mb-8 inline-flex items-center gap-3 rounded-full border border-[#274439] bg-[#0D1B15]/85 px-4 py-2 font-mono text-xs text-[#34D399] sm:text-sm"
+        >
+          <span className="h-2 w-2 animate-pulse rounded-full bg-[#34D399]" aria-hidden="true" />
+          Open to entry-level roles
+        </div>
 
-      <div ref={innerContentRef} className="max-w-7xl mx-auto w-full relative z-10">
-        <div className="relative text-center">
-          <h1
-            ref={nameRef}
-            aria-label={site.name}
-            className="select-none leading-none cursor-default mb-6 md:mb-4"
+        <h1
+          ref={headingRef}
+          aria-label={site.name}
+          className="mb-7 flex flex-wrap items-baseline gap-x-3 gap-y-0 leading-[0.95] sm:gap-x-6 md:mb-8"
+        >
+          <span
+            aria-hidden="true"
+            data-hero-line
+            className="inline-block font-display text-[clamp(3.5rem,8.25vw,8.2rem)] font-black uppercase tracking-[-0.075em]"
           >
-            <span aria-hidden="true" className="block">
-              <span
-                data-hero-line
-                className="block font-display font-black uppercase text-hero tracking-tight"
-              >
-                SHIVAM
-              </span>
-              <span
-                data-hero-line
-                className="serif-accent block text-hero-sm leading-[0.85] md:ml-[14vw]"
-              >
-                sharma
-              </span>
-            </span>
-          </h1>
+            SHIVAM
+          </span>
+          <em
+            aria-hidden="true"
+            data-hero-line
+            className="inline-block font-serif text-[clamp(4.2rem,8.55vw,8.6rem)] font-normal italic normal-case tracking-[-0.06em] text-[#34D399]"
+          >
+            Sharma
+          </em>
+        </h1>
 
-          <div ref={stampRef} className="absolute -top-6 right-0 lg:right-4 xl:right-10 hidden sm:block opacity-0">
-            <StampBadge onClick={() => handleScroll('contact')} />
-          </div>
-        </div>
+        <p
+          ref={descriptionRef}
+          className="mb-7 max-w-[680px] font-sans text-base leading-relaxed text-[#B4C4BB] sm:text-lg md:text-xl"
+        >
+          Fresher Data Analyst who cleans messy records, writes SQL and creates clear Excel dashboards
+          and MIS reports. Currently learning Power BI.
+          <span className="mt-2 block">
+            <strong className="font-semibold text-[#E2E8E4]">47 WPM typing speed · 98% accuracy</strong>
+            <span className="text-[#9DB1A5]"> (1-minute test)</span>
+          </span>
+        </p>
 
-        <div className="flex justify-center items-center py-1 md:py-3 px-4 sm:px-6 w-full">
-          <div className="max-w-xl w-full text-center mx-auto">
-            <p
-              ref={paragraphRef}
-              className="text-warm font-sans text-base sm:text-lg md:text-xl leading-relaxed mb-8 md:mb-10 text-center mx-auto"
+        <ul
+          ref={rolesRef}
+          aria-label="Entry-level roles I am interested in"
+          className="mb-8 flex flex-wrap gap-2 sm:gap-2.5"
+        >
+          {jobRoles.map((role) => (
+            <li
+              key={role}
+              className="rounded-full border border-[#2A3B32] bg-[#101B16]/90 px-4 py-2 text-xs font-semibold text-[#E2E8E4] transition-colors duration-300 hover:border-[#34D399]/70 hover:text-[#34D399] sm:text-sm"
             >
-              Turning raw data into useful insights, dashboards and business reports.
-            </p>
+              {role}
+            </li>
+          ))}
+        </ul>
 
-            <div ref={tickerRef} className="w-full flex justify-center">
-              <RoleTicker />
-            </div>
-
-            <div ref={buttonsRef} className="flex flex-row justify-center items-center gap-2.5 sm:gap-4 flex-wrap w-full max-w-full mx-auto px-2">
-              <AnimatedButton
-                onClick={() => handleScroll('projects')}
-                topText="PROJECTS"
-                bottomText="VIEW WORK →"
-                variant="primary"
-              />
-              <AnimatedButton
-                onClick={() => handleScroll('contact')}
-                topText="CONTACT"
-                bottomText="GET IN TOUCH →"
-                variant="light"
-              />
-              <AnimatedButton
-                as="a"
-                href="/resume"
-                target="_blank"
-                rel="noopener noreferrer"
-                topText="RESUME"
-                bottomText="VIEW ↗"
-                variant="outline"
-              />
-            </div>
-          </div>
+        <div ref={buttonsRef} className="flex flex-wrap items-center gap-x-3 gap-y-4">
+          <AnimatedButton
+            onClick={() => scrollTo('projects')}
+            topText="See my projects"
+            bottomText="View projects →"
+            variant="primary"
+            className="!text-[#061911]"
+          />
+          <AnimatedButton
+            onClick={() => scrollTo('contact')}
+            topText="Contact me"
+            bottomText="Say hello →"
+            variant="outline"
+            className="!border-[#34D399] !text-[#34D399]"
+          />
         </div>
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <MarqueeStrip />
       </div>
     </section>
   );
-};
-
-export default HomeBanner;
+}

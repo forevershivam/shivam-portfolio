@@ -9,7 +9,7 @@ export default function MarqueeStrip() {
   const track1Ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 
-  const items = ['Data Analytics', 'MIS Reporting', 'Excel & SQL', 'Power BI'];
+  const items = ['Data Analyst', 'Back Office Executive', 'MIS Executive', 'Associate Analyst', 'Data Entry', 'Excel', 'MySQL', 'Power BI'];
 
   useEffect(() => {
     if (reduced) return;
@@ -115,10 +115,10 @@ export default function MarqueeStrip() {
 
   return (
     <div
-      className="w-full relative z-20 overflow-hidden select-none border-t border-b border-border-dark"
+      className="w-full relative z-20 overflow-hidden select-none border-t border-b border-[#B7C4BD]"
       aria-hidden="true"
     >
-      <div className="overflow-hidden bg-cream py-3">
+      <div className="overflow-hidden bg-[#E2E8E4] py-3">
         <div
           ref={track1Ref}
           className="inline-flex items-center gap-0 whitespace-nowrap"
@@ -127,7 +127,7 @@ export default function MarqueeStrip() {
             <span key={i} className="inline-flex items-center gap-6 pr-6">
               {items.map((item, idx) => (
                 <React.Fragment key={idx}>
-                  <span className="font-mono text-[13px] uppercase tracking-[0.15em] text-warm font-medium">
+                  <span className="font-mono text-[13px] uppercase tracking-[0.15em] text-[#25392D] font-medium">
                     {item}
                   </span>
                   <span className="text-accent text-[10px]">◆</span>

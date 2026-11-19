@@ -4,7 +4,7 @@ export const site={
  location:'Delhi, India',timeZone:'Asia/Kolkata',timeZoneLabel:'IST',
  url:process.env.NEXT_PUBLIC_SITE_URL||'http://localhost:3000',
  tagline:'Data Analyst | Excel, SQL, Power BI & MIS Reporting',
- roles:['Data Analytics','Excel & SQL','MIS Reporting','Business Insights']
+ roles:['Back Office Executive','MIS Executive','Associate Analyst','Data Entry']
 } as const;
 export type SocialKey='github'|'linkedin'|'instagram';
 export const socials:Record<SocialKey,{label:string;href:string}>={

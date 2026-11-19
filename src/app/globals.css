@@ -266,3 +266,12 @@ body.cursor-disabled * {
   animation: stamp-spin 14s linear infinite;
   transform-origin: center;
 }
+
+/* Keep the floating navigation readable against the dark animated homepage. */
+body:has(.shivam-hero) .home-aware-nav .text-warm {
+  color: #E2E8E4 !important;
+}
+body:has(.shivam-hero) .home-aware-nav a:hover,
+body:has(.shivam-hero) .home-aware-nav a:focus-visible {
+  color: #34D399 !important;
+}
