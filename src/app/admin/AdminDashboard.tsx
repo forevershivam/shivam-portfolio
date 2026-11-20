@@ -118,6 +118,11 @@ export default function AdminDashboard() {
   const [uploadKind,setUploadKind]=useState<'photo'|'project'|'resume'>('photo');
   const [recentImage,setRecentImage]=useState('');
   const [activeProject,setActiveProject]=useState(0);
+  const [projectSearch,setProjectSearch]=useState('');
+  const [mediaSearch,setMediaSearch]=useState('');
+  const [inboxSearch,setInboxSearch]=useState('');
+  const [inboxStatus,setInboxStatus]=useState<'all'|'unread'|'read'|'archived'>('all');
+  const [downloadsSearch,setDownloadsSearch]=useState('');
 
   const change=(f:(draft:PortfolioData)=>void)=>{
     setData(prev=>{const next=structuredClone(prev);f(next);return next;});
@@ -292,6 +297,30 @@ export default function AdminDashboard() {
     finally{setBusy(false);}
   };
   const project=data.projects.items[activeProject];
+  const matchingProjects=data.projects.items.map((p,index)=>({...p,index}))
+    .filter(p=>[p.title,p.type,p.role,...p.tech].join(' ').toLowerCase().includes(projectSearch.trim().toLowerCase()));
+  const filteredMedia=media.filter(item=>[item.alt_text,item.storage_path].join(' ').toLowerCase().includes(mediaSearch.trim().toLowerCase()));
+  const filteredMessages=messages.filter(item=>(inboxStatus==='all'||item.status===inboxStatus)&&[item.sender_name,item.sender_email,item.message].join(' ').toLowerCase().includes(inboxSearch.trim().toLowerCase()));
+  const filteredDownloads=downloads.filter(item=>[item.visitor_name,item.company_name,item.contact_email||'',item.contact_phone||''].join(' ').toLowerCase().includes(downloadsSearch.trim().toLowerCase()));
+  const openView=(key:View)=>{
+    if(dirty&&!(view==='media'&&key==='about')){setFail('Unsaved edits: save your draft before switching sections.');return;}
+    setView(key);setNotice('');setFail('');
+  };
+  const duplicateProject=()=>{
+    if(!project)return;
+    const copy=structuredClone(project);
+    copy.id=Date.now();
+    copy.slug=`${copy.slug.replace(/-copy(?:-\d+)?$/,'')}-copy-${Date.now().toString(36)}`;
+    copy.title+= ' (Copy)';
+    change(d=>{d.projects.items.splice(activeProject+1,0,copy);});
+    setActiveProject(activeProject+1);
+  };
+  const duplicateTimeline=(index:number)=>change(d=>{d.timeline.items.splice(index+1,0,structuredClone(d.timeline.items[index]));});
+  const duplicateService=(index:number)=>change(d=>{const copy=structuredClone(d.skills.services[index]);copy.id=String(Date.now()).slice(-6);d.skills.services.splice(index+1,0,copy);});
+  const copyText=async(value:string,label='Link')=>{
+    try{await navigator.clipboard.writeText(value);setNotice(label+' copied to clipboard.');}
+    catch{setFail('Clipboard unavailable. Select and copy the text manually.');}
+  };
 
   if(session==='checking') return <main className="admin-shell flex min-h-screen items-center justify-center bg-[#F6F8FB] text-[#0F766E]">Verifying admin session…</main>;
   if(session==='guest')return <main className="admin-shell relative flex min-h-screen items-center justify-center bg-[#F6F8FB] p-5 text-[#162536]">
