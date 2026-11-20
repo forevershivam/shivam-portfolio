@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminSession, sameOrigin } from '@/lib/admin-auth';
 import { supabaseRequest } from '@/lib/portfolio-supabase';
-import { editableSections } from '@/lib/portfolio-defaults';
+import { editableSections, mergePortfolio, type PortfolioData, type EditableSection } from '@/lib/portfolio-defaults';
 export const dynamic = 'force-dynamic';
 
 const authorized = async () => getAdminSession();
@@ -88,8 +88,11 @@ export async function POST(request:Request) {
     const r=await supabaseRequest(`/rest/v1/portfolio_section_versions?select=content&section_key=eq.${encodeURIComponent(data.section)}&id=eq.${data.versionId}&limit=1`,{},session.token);
     if(!r.ok)return NextResponse.json({error:'Could not read history'},{status:502});
     const [snapshot]=await r.json();
-    if(!snapshot||!valid(data.section,snapshot.content))return NextResponse.json({error:'History version not compatible with editor fields'},{status:422});
-    const write=await upsert('/rest/v1/portfolio_drafts?on_conflict=section_key',{section_key:data.section,content:snapshot.content,updated_at:new Date().toISOString()},session.token);
+    if(!snapshot||!snapshot.content)return NextResponse.json({error:'History version was not found'},{status:404});
+    // Old versions may predate newer fields (theme palette, social image or typing stats).
+    const normalized=mergePortfolio({[data.section]:snapshot.content} as Partial<PortfolioData>)[data.section as EditableSection];
+    if(!valid(data.section,normalized))return NextResponse.json({error:'History version not compatible with editor fields'},{status:422});
+    const write=await upsert('/rest/v1/portfolio_drafts?on_conflict=section_key',{section_key:data.section,content:normalized,updated_at:new Date().toISOString()},session.token);
     if(!write.ok)return NextResponse.json({error:'Could not restore draft'},{status:502});
     return NextResponse.json({restored:true,content:snapshot.content,status:'draft'});
   }
