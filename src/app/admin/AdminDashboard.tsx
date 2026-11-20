@@ -200,7 +200,7 @@ export default function AdminDashboard() {
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#244234] bg-[#091910] px-5 py-5 md:px-9">
           <div><div className="text-[11px] uppercase tracking-[0.18em] text-[#729B7E]">Admin / {view}</div><h1 className="mt-1 text-xl font-bold capitalize text-white sm:text-2xl">{view.replace(/-/g,' ')}</h1></div>
           <div className="flex flex-wrap items-center gap-2">
-            <a href="/" target="_blank" rel="noopener noreferrer" className={ui.button}><ExternalLink size={15}/> View website</a>
+            <Link href="/" target="_blank" rel="noopener noreferrer" className={ui.button}><ExternalLink size={15}/> View website</Link>
             {editable.includes(view as EditableSection)&&<button type="button" onClick={save} disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-[#38D992] px-5 py-2.5 text-sm font-extrabold text-[#092015] transition hover:bg-[#7BE9B6] disabled:opacity-50"><Save size={16}/>{busy?'Saving…':'Save changes'}</button>}
             <button type="button" onClick={logout} className={ui.button+' lg:hidden'}><LogOut size={15}/></button>
           </div>
