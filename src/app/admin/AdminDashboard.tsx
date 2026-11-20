@@ -333,7 +333,7 @@ export default function AdminDashboard() {
         <Field label="Admin email" value={email} onChange={setEmail} type="email" placeholder="you@example.com"/>
         <label className="block"><span className={ui.label}>Password</span><input className={ui.input} value={password} onChange={e=>setPassword(e.target.value)} type="password" autoComplete="current-password" required minLength={6}/></label>
       </div>
-      {loginError&&<p role="alert" className="mt-5 rounded-xl bg-red-950/40 p-3 text-sm text-red-200">{loginError}</p>}
+      {loginError&&<p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{loginError}</p>}
       <button disabled={busy||!email||!password} className="admin-primary mt-7 w-full rounded-xl px-5 py-3.5 font-bold text-white disabled:opacity-50">{busy?'Signing in…':'Sign in securely →'}</button>
       <Link href="/" className="mt-5 block text-center text-xs text-[#64748B] hover:text-slate-900">← Back to portfolio</Link>
     </form>
@@ -380,6 +380,7 @@ export default function AdminDashboard() {
            </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/" target="_blank" rel="noopener noreferrer" className={ui.button}><ExternalLink size={15}/> View website</Link>
+            <button type="button" className={ui.button} disabled={busy} title="Reload saved content from the server" onClick={async()=>{if(dirty&&!window.confirm('Discard unsaved edits and reload content?'))return;setBusy(true);try{await load();setNotice('Latest saved content loaded.');setFail('');}catch(e){setFail(e instanceof Error?e.message:'Reload failed');}finally{setBusy(false);}}}><RotateCcw size={15}/> Reload</button>
             {editable.includes(view as EditableSection)&&<>
               <button type="button" onClick={()=>setPreviewOpen(true)} className={ui.button}><ExternalLink size={15}/> Preview</button>
               {(dirty||draftKeys.has(view))&&<button type="button" onClick={discardDraft} disabled={busy} className={ui.button}>Discard</button>}
@@ -667,7 +668,7 @@ export default function AdminDashboard() {
             <label className="relative mb-5 block"><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><span className="sr-only">Search CV history</span><input className={ui.input+' !pl-10'} value={downloadsSearch} onChange={e=>setDownloadsSearch(e.target.value)} placeholder="Search visitor or company name..."/></label>
             {filteredDownloads.length===0?<p className="admin-inset p-5 text-sm text-slate-500">{downloads.length===0?'No CV download records yet.':'No records match your search.'}</p>:<div className="overflow-x-auto rounded-xl border border-slate-200"><table className="w-full min-w-[540px] text-left text-sm"><thead className="text-xs uppercase text-[#64748B]"><tr><th className="p-3">Visitor</th><th className="p-3">Company</th><th className="p-3">Contact</th><th className="p-3">Date</th></tr></thead><tbody>{filteredDownloads.map(d=><tr className="border-t border-[#DCE5EA]" key={d.id}><td className="p-3">{d.visitor_name}</td><td className="p-3">{d.company_name}</td><td className="p-3">{d.contact_email||d.contact_phone||'—'}</td><td className="p-3">{new Date(d.downloaded_at).toLocaleDateString('en-IN')}</td></tr>)}</tbody></table></div>}
           </Panel>}
-          {editable.includes(view as EditableSection)&&<Panel title="Published version history" subtitle="Each Publish creates a snapshot. Restore copies an older version into Draft; the live website changes only after you Publish it.">
+          {editable.includes(view as EditableSection)&&<Panel title="Publishing history & recovery" subtitle="Each Publish creates a snapshot. Restoring a version creates a new private draft; visitors see it only after Publish.">
             <button type="button" className={ui.button+' mb-4'} onClick={()=>{
               if(!window.confirm('Load original default content into the editor? Save Draft and Publish to apply it.'))return;
               change(d=>{(d as unknown as Record<string,unknown>)[view]=structuredClone(portfolioDefaults[view as EditableSection]);});
