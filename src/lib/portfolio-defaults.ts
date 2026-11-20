@@ -1,20 +1,21 @@
 import { getAllProjects, type Project } from '@/lib/projects';
 import { navLinks, socials } from '@/lib/site';
 import type { StackCategory } from '@/components/sections/TechStack';
+import { defaultTheme, normalizeTheme, type PortfolioTheme } from '@/lib/portfolio-theme';
 
 export type TimelineEntry = { year: string; title: string; organization: string; stat: string; type: string };
 export type SkillEntry = { id: string; title: string; description: string; items: string[] };
 export type MenuLink = { name: string; href: string; menuOnly?: boolean };
 export type PortfolioData = {
-  hero: { firstName: string; lastName: string; description: string; typing: string; roles: string[] };
+  hero: { firstName: string; lastName: string; description: string; typing: string; typingWpm: number; typingAccuracy: number; roles: string[] };
   about: { intro: string; body: string; photoUrl: string };
   timeline: { items: TimelineEntry[] };
   skills: { description: string; services: SkillEntry[]; stack: StackCategory[] };
   projects: { items: Project[] };
   navigation: { links: MenuLink[] };
   socials: { github: string; linkedin: string; instagram: string };
-  seo: { title: string; description: string };
-  theme: { accent: string };
+  seo: { title: string; description: string; socialImage: string; siteUrl: string };
+  theme: PortfolioTheme;
 };
 export const editableSections = ['hero', 'about', 'timeline', 'skills', 'projects', 'navigation', 'socials', 'seo', 'theme'] as const;
 export type EditableSection = (typeof editableSections)[number];
@@ -25,6 +26,8 @@ export const portfolioDefaults: PortfolioData = {
     lastName: 'Sharma',
     description: 'Fresher Data Analyst who cleans messy records, writes SQL and creates clear Excel dashboards and MIS reports. Currently learning Power BI.',
     typing: '47 WPM typing speed · 98% accuracy',
+    typingWpm: 47,
+    typingAccuracy: 98,
     roles: ['Back Office Executive', 'MIS Executive', 'Associate Analyst', 'Data Entry'],
   },
   about: {
@@ -58,8 +61,8 @@ export const portfolioDefaults: PortfolioData = {
   projects: { items: getAllProjects() },
   navigation: { links: navLinks.map(link => ({ ...link })) },
   socials: { github: socials.github.href, linkedin: socials.linkedin.href, instagram: socials.instagram.href },
-  seo: { title: 'Shivam Sharma | Data Analytics Portfolio', description: 'Shivam Sharma — Excel dashboards, SQL, data analytics and MIS reporting portfolio.' },
-  theme: { accent: '#34D399' },
+  seo: { title: 'Shivam Sharma | Data Analytics Portfolio', description: 'Shivam Sharma — Excel dashboards, SQL, data analytics and MIS reporting portfolio.', socialImage:'', siteUrl:'https://stillshivam.vercel.app' },
+  theme: defaultTheme,
 };
 
 export function mergePortfolio(overrides: Partial<PortfolioData>): PortfolioData {
@@ -67,7 +70,7 @@ export function mergePortfolio(overrides: Partial<PortfolioData>): PortfolioData
   for (const key of editableSections) {
     const value = overrides[key];
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      (result as unknown as Record<string, unknown>)[key] = { ...portfolioDefaults[key], ...value };
+      (result as unknown as Record<string, unknown>)[key] = key==='theme' ? normalizeTheme(value as Partial<PortfolioTheme>) : { ...portfolioDefaults[key], ...value };
     }
   }
   return result;
