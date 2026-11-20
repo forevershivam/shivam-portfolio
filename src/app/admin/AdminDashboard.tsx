@@ -425,27 +425,38 @@ export default function AdminDashboard() {
             <div className="space-y-4">{(['github','linkedin','instagram'] as const).map(k=>
               <Field key={k} label={k} value={data.socials[k]} onChange={v=>change(d=>{d.socials[k]=v;})}/>)}</div>
           </Panel>}
-          {view==='seo'&&<Panel title="Search appearance" subtitle="Set your website title and search/social description.">
-            <div className="space-y-4">
-              <Field label="Site title" value={data.seo.title} onChange={v=>change(d=>{d.seo.title=v;})}/>
-              <Field label="Meta description" multiline value={data.seo.description} onChange={v=>change(d=>{d.seo.description=v;})}/>
-            </div>
-          </Panel>}
-          {view==='theme'&&<Panel title="Brand colour" subtitle="Choose the accent used by theme-aware elements. Some artistic animations retain their original colours for consistency.">
-            <div className="flex flex-wrap items-center gap-4">
-              <input type="color" aria-label="Accent colour" value={data.theme.accent} onChange={e=>change(d=>{d.theme.accent=e.target.value;})} className="h-16 w-20 cursor-pointer rounded-xl border border-[#254536] bg-transparent p-1"/>
-              <div className="min-w-44 flex-1"><Field label="Accent hex" value={data.theme.accent} onChange={v=>change(d=>{d.theme.accent=v;})}/></div>
-            </div>
-          </Panel>}
-          {view==='media'&&<Panel title="Photos & media" subtitle="PNG, JPG or WebP under 8 MB. Your cutout portrait can be replaced here without modifying the FlowField animation.">
-            <form onSubmit={upload} className="space-y-4">
-              <label className="block"><span className={ui.label}>Use image for</span><select className={ui.input} value={uploadKind} onChange={e=>setUploadKind(e.target.value as 'photo'|'project'|'resume')}><option value="photo">About portrait</option><option value="project">Project image</option></select></label>
-              <input id="admin-file-input" className={ui.input} type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>setFile(e.target.files?.[0]||null)}/>
-              <button disabled={busy||!file} type="submit" className={ui.button}><ImagePlus size={16}/>{busy?'Uploading…':'Upload image'}</button>
-            </form>
-            {recentImage&&<div className="mt-6 space-y-3"><img alt="Recently uploaded" className="h-44 w-44 rounded-xl bg-[#16301F] object-contain" src={recentImage}/><Field label="Uploaded image URL" value={recentImage} onChange={setRecentImage}/></div>}
-          </Panel>}
-          {view==='resume'&&<Panel title="Private resume manager" subtitle="PDF is private. Uploading does NOT enable public downloads; the visitor form and alerts are paused until tomorrow.">
+          {view==='seo'&&<Panel title="SEO & social sharing" subtitle="Control the website title, Google description, canonical URL and WhatsApp/LinkedIn preview image.">
+             <div className="space-y-4">
+               <Field label="Site title" value={data.seo.title} onChange={v=>change(d=>{d.seo.title=v;})}/>
+               <Field label="Meta description" multiline value={data.seo.description} onChange={v=>change(d=>{d.seo.description=v;})}/>
+               <Field label="Canonical website URL" value={data.seo.siteUrl} onChange={v=>change(d=>{d.seo.siteUrl=v;})}/>
+               <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"><Field label="Social preview image URL (1200×630 recommended)" value={data.seo.socialImage} onChange={v=>change(d=>{d.seo.socialImage=v;})}/><button type="button" className={ui.button} onClick={()=>setPickerTarget('seo')}>Choose from library</button></div>
+               {data.seo.socialImage&&<img src={data.seo.socialImage} alt="Social card preview" className="h-auto max-h-44 w-full rounded-xl border border-[#2E523B] object-contain" />}
+               <div className="rounded-xl border border-[#315640] bg-[#13291C] p-4"><p className="text-xs text-[#91B8A0]">Search / share preview</p><h3 className="mt-2 text-base font-semibold text-white">{data.seo.title}</h3><p className="mt-1 text-xs text-[#B9D1C1]">{data.seo.siteUrl}</p><p className="mt-2 text-xs text-[#A6C4B2]">{data.seo.description}</p></div>
+             </div>
+           </Panel>}
+           {view==='theme'&&<Panel title="Website Theme & Design Studio" subtitle="Complete colour families, semantic roles, typography, custom presets, contrast checks and rollback. This controls the public website—not this admin panel.">
+             <ThemeStudio value={data.theme} onChange={theme=>change(d=>{d.theme=theme;})} presets={presets} onSavePresets={savePresets}/>
+           </Panel>}
+           {view==='media'&&<Panel title="Media Library" subtitle="Manage your uploaded PNG, JPEG and WebP files. Attach images directly in About, Projects or SEO using the picker—no URL copy-paste.">
+             <form onSubmit={upload} className="space-y-4">
+               <label className="block"><span className={ui.label}>Use image for</span><select className={ui.input} value={uploadKind} onChange={e=>setUploadKind(e.target.value as 'photo'|'project'|'resume')}><option value="photo">About portrait</option><option value="project">Project / SEO image</option></select></label>
+               <input id="admin-file-input" className={ui.input} type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>setFile(e.target.files?.[0]||null)}/>
+               <button disabled={busy||!file} type="submit" className={ui.button}><ImagePlus size={16}/>{busy?'Uploading…':'Upload image'}</button>
+             </form>
+             {recentImage&&<div className="mt-4 flex items-center gap-3 rounded-xl border border-[#294A37] p-3"><img alt="Recently uploaded" className="h-16 w-16 rounded-lg object-contain" src={recentImage}/><span className="text-xs text-[#A4D8B7]">Latest upload is in the library below.</span></div>}
+             <div className="mb-4 mt-7 flex items-center justify-between"><h3 className="text-lg font-semibold text-white">Saved images ({media.length})</h3><button type="button" className={ui.button} disabled={busy} onClick={()=>refreshMedia().catch(e=>setFail(e.message))}>Refresh</button></div>
+             {media.length===0?<p className="rounded-xl border border-[#284734] p-4 text-sm text-[#A8C5B0]">No images uploaded yet.</p>:
+             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{media.map(item=><article key={item.id} className="overflow-hidden rounded-xl border border-[#2D503D] bg-[#10241A]">
+               <div className="flex h-40 items-center justify-center bg-[#1B3023]"><img className="h-full w-full object-contain" src={item.url} alt={item.alt_text||'Portfolio image'}/></div>
+               <div className="space-y-3 p-3">
+                 <label className="block"><span className={ui.label}>Image label / alt text</span><input className={ui.input} value={item.alt_text} maxLength={200} onChange={e=>setMedia(old=>old.map(m=>m.id===item.id?{...m,alt_text:e.target.value}:m))}/></label>
+                 <div className="flex flex-wrap gap-2"><button type="button" className={ui.button+' !text-xs'} onClick={async()=>{try{await request('/api/admin/media',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:item.id,alt_text:item.alt_text})});setNotice('Image label saved.');}catch(e){setFail(e instanceof Error?e.message:'Unable to update label');}}}>Save label</button><button type="button" className={ui.danger} disabled={busy} onClick={()=>deleteImage(item.id)}><Trash2 size={13}/> Delete</button></div>
+                 <p className="truncate text-[10px] text-[#91B6A1]" title={item.url}>{item.storage_path}</p>
+               </div>
+             </article>)}</div>}
+           </Panel>}
+           {view==='resume'&&<Panel title="Private resume manager" subtitle="PDF is private. Uploading does NOT enable public downloads; the visitor form and alerts are paused until tomorrow.">
             <form onSubmit={upload} className="space-y-4"><input id="admin-file-input" className={ui.input} type="file" accept="application/pdf" onChange={e=>{setFile(e.target.files?.[0]||null);setUploadKind('resume');}}/>
               <button disabled={busy||!file} type="submit" className={ui.button}><FileText size={16}/>{busy?'Uploading…':'Upload private PDF'}</button></form>
             <div className="mt-7 space-y-2">{resumes.length===0?<p className="text-sm text-[#9EB3A6]">No resume uploaded yet.</p>:resumes.map(r=>
