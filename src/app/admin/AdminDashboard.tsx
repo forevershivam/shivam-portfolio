@@ -16,8 +16,8 @@ type MediaRecord = {id:string;storage_path:string;alt_text:string;created_at:str
 type VersionRecord = {id:number;section_key:string;published_at:string};
 const groups: {heading:string;items:{key:View;label:string}[]}[] = [
   { heading:'Workspace',items:[{key:'overview',label:'Overview'}, {key:'inbox',label:'Contact inbox'}, {key:'downloads',label:'CV activity'}]},
-  { heading:'Site editor',items:[{key:'hero',label:'Homepage'}, {key:'about',label:'About me'}, {key:'timeline',label:'Timeline'}, {key:'skills',label:'Skills & services'}, {key:'projects',label:'Projects'}, {key:'navigation',label:'Navigation'}, {key:'socials',label:'Social links'}, {key:'seo',label:'SEO'}, {key:'theme',label:'Theme'}]},
-  { heading:'Files',items:[{key:'media',label:'Photo & media'}, {key:'resume',label:'Resume manager'}]},
+  { heading:'Site editor',items:[{key:'hero',label:'Homepage'}, {key:'about',label:'About me'}, {key:'timeline',label:'Timeline'}, {key:'skills',label:'Skills & services'}, {key:'projects',label:'Projects'}, {key:'navigation',label:'Navigation'}, {key:'socials',label:'Social links'}, {key:'seo',label:'SEO'}, {key:'theme',label:'Theme Studio'}]},
+  { heading:'Files',items:[{key:'media',label:'Media Library'}, {key:'resume',label:'Resume manager'}]},
 ];
 const editable: EditableSection[]=['hero','about','timeline','skills','projects','navigation','socials','seo','theme'];
 const ui={
@@ -283,7 +283,7 @@ export default function AdminDashboard() {
         <nav className="flex gap-1 overflow-x-auto p-3 lg:block lg:space-y-5 lg:overflow-visible lg:p-5" aria-label="Admin sections">
           {groups.map(group=><div key={group.heading} className="flex shrink-0 gap-1 lg:block">
             <span className="hidden px-3 text-[10px] uppercase tracking-[0.2em] text-[#688C76] lg:mb-2 lg:block">{group.heading}</span>
-            {group.items.map(item=><button key={item.key} type="button" onClick={()=>{setView(item.key);setNotice('');setFail('');}}
+            {group.items.map(item=><button key={item.key} type="button" onClick={()=>{if(dirty && !(view==='media'&&item.key==='about')){setFail('You have unsaved edits. Save Draft before switching sections.');return;}setView(item.key);setNotice('');setFail('');}}
               className={'whitespace-nowrap rounded-xl px-4 py-2.5 text-left text-xs font-semibold transition lg:my-0.5 lg:block lg:w-full lg:text-sm '+(view===item.key?'bg-[#1E4830] text-[#69F4B4]':'text-[#A7C2B0] hover:bg-[#152A1E] hover:text-white')}>
               {item.label}
             </button>)}
@@ -297,10 +297,15 @@ export default function AdminDashboard() {
 
       <div className="min-w-0 flex-1">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#244234] bg-[#091910] px-5 py-5 md:px-9">
-          <div><div className="text-[11px] uppercase tracking-[0.18em] text-[#729B7E]">Admin / {view}</div><h1 className="mt-1 text-xl font-bold capitalize text-white sm:text-2xl">{view.replace(/-/g,' ')}</h1></div>
+          <div><div className="text-[11px] uppercase tracking-[0.18em] text-[#729B7E]">Admin / {view}{draftKeys.has(view)?' · Saved draft':''}{dirty?' · Unsaved edits':''}</div><h1 className="mt-1 text-xl font-bold capitalize text-white sm:text-2xl">{view.replace(/-/g,' ')}</h1></div>
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/" target="_blank" rel="noopener noreferrer" className={ui.button}><ExternalLink size={15}/> View website</Link>
-            {editable.includes(view as EditableSection)&&<button type="button" onClick={save} disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-[#38D992] px-5 py-2.5 text-sm font-extrabold text-[#092015] transition hover:bg-[#7BE9B6] disabled:opacity-50"><Save size={16}/>{busy?'Saving…':'Save changes'}</button>}
+            {editable.includes(view as EditableSection)&&<>
+              <button type="button" onClick={()=>setPreviewOpen(true)} className={ui.button}><ExternalLink size={15}/> Preview</button>
+              {(dirty||draftKeys.has(view))&&<button type="button" onClick={discardDraft} disabled={busy} className={ui.button}>Discard</button>}
+              <button type="button" onClick={save} disabled={busy} className={ui.button}><Save size={16}/>{busy?'Saving…':'Save Draft'}</button>
+              <button type="button" onClick={publish} disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-[#38D992] px-5 py-2.5 text-sm font-extrabold text-[#092015] transition hover:bg-[#7BE9B6] disabled:opacity-50"><Check size={16}/> Publish</button>
+            </>}
             <button type="button" onClick={logout} className={ui.button+' lg:hidden'}><LogOut size={15}/></button>
           </div>
         </header>
@@ -309,15 +314,15 @@ export default function AdminDashboard() {
           {notice&&<div role="status" className="flex items-start gap-2 rounded-xl border border-[#23603D] bg-[#123B25] px-4 py-3 text-sm text-[#A8FFD0]"><Check size={18} className="mt-0.5 shrink-0"/>{notice}</div>}
           {fail&&<div role="alert" className="rounded-xl border border-[#78413A] bg-[#3D1B1D] px-4 py-3 text-sm text-[#FFD0C8]">{fail}</div>}
           {view==='overview'&&<>
-            <Panel title="Portfolio workspace" subtitle="Manage your content here. All edits stay private until saved, and no GitHub push is performed by the dashboard.">
-              <div className="grid gap-3 sm:grid-cols-3">
-                {[['Editable sections','9'],['Contact messages',String(messages.length)],['Tracked CV downloads',String(downloads.length)]].map(([k,v])=>
+            <Panel title="Portfolio workspace" subtitle="Save Draft keeps changes private; Preview shows pending edits, Publish makes them public. No GitHub push is needed for content.">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {[['Editable sections','9'],['Contact messages',counts.messages===null?'—':String(counts.messages)],['Tracked CV downloads',counts.downloads===null?'—':String(counts.downloads)],['Media files',counts.media===null?'—':String(counts.media)]].map(([k,v])=>
                   <div key={k} className="rounded-xl border border-[#2A4936] bg-[#10281A] p-5"><p className="text-xs text-[#A7BCAA]">{k}</p><p className="mt-3 text-4xl font-black text-[#5BE2A0]">{v}</p></div>)}
               </div>
             </Panel>
-            <Panel title="What is ready?" subtitle="Supabase-secured editing, media storage, saved content and admin-only records are available in this build.">
+            <Panel title="What is ready?" subtitle="Supabase-secured content, media gallery, draft history, theme presets and admin-only records.">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-xl bg-[#102A1B] p-4"><b className="text-[#84EBB2]">✓ CMS editor</b><p className="mt-2 text-sm text-[#B0C5B6]">Hero, About, Timeline, Skills, Projects, Navigation, Socials, SEO and accent colour.</p></div>
+                <div className="rounded-xl bg-[#102A1B] p-4"><b className="text-[#84EBB2]">✓ Content editor</b><p className="mt-2 text-sm text-[#B0C5B6]">Hero, About, Timeline, Skills, Projects, Navigation, Socials, SEO and full Design Studio.</p></div>
                 <div className="rounded-xl bg-[#2D2519] p-4"><b className="text-[#FFE2A0]">⏸ Email workflows paused</b><p className="mt-2 text-sm text-[#D1C1A6]">Contact notifications and gated CV download delivery are intentionally scheduled for later.</p></div>
               </div>
             </Panel>
@@ -329,7 +334,8 @@ export default function AdminDashboard() {
             </div>
             <div className="mt-4 space-y-4">
               <Field label="Hero description" value={data.hero.description} multiline onChange={v=>change(d=>{d.hero.description=v;})}/>
-              <Field label="Typing highlight" value={data.hero.typing} onChange={v=>change(d=>{d.hero.typing=v;})}/>
+              <div className="grid gap-4 sm:grid-cols-2"><Field label="Typing speed (WPM)" type="number" value={String(data.hero.typingWpm)} onChange={v=>change(d=>{d.hero.typingWpm=Number(v);})}/><Field label="Typing accuracy (%)" type="number" value={String(data.hero.typingAccuracy)} onChange={v=>change(d=>{d.hero.typingAccuracy=Number(v);})}/></div>
+               <p className="text-xs text-[#A8C2B1]">These two numbers update in both the homepage highlight and the Skills section.</p>
               <Lines label="Job role chips" items={data.hero.roles} onChange={v=>change(d=>{d.hero.roles=v;})}/>
             </div>
           </Panel>}
@@ -337,7 +343,7 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               <Field label="Introduction" multiline value={data.about.intro} onChange={v=>change(d=>{d.about.intro=v;})}/>
               <Field label="Biography (blank lines separate paragraphs)" multiline value={data.about.body} onChange={v=>change(d=>{d.about.body=v;})}/>
-              <Field label="Portrait image URL" value={data.about.photoUrl} onChange={v=>change(d=>{d.about.photoUrl=v;})}/>
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"><Field label="Portrait image URL" value={data.about.photoUrl} onChange={v=>change(d=>{d.about.photoUrl=v;})}/><button type="button" className={ui.button} onClick={()=>setPickerTarget('about')}>Choose from library</button></div>
               {data.about.photoUrl&&<img src={data.about.photoUrl} alt="About preview" className="h-48 w-40 rounded-xl border border-[#36583F] bg-[#142A1F] object-contain object-bottom"/>}
             </div>
           </Panel>}
@@ -391,6 +397,7 @@ export default function AdminDashboard() {
                   <Lines key={k} label={k} items={(project[k] as string[])||[]}
                     onChange={v=>change(d=>{(d.projects.items[activeProject] as unknown as Record<string,string[]>)[k]=v;})}/>)}
               </div>
+              <button type="button" className={ui.button+' mt-4'} onClick={()=>setPickerTarget('project')}>Add image from Media Library</button>
               <div className="mt-5 space-y-3"><span className={ui.label}>Project statistics</span>
                 {project.stats.map((s,i)=><div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
                   <Field label="Value" value={s.value} onChange={v=>change(d=>{d.projects.items[activeProject].stats[i].value=v;})}/>
