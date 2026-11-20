@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowDown, ArrowUp, Check, ExternalLink, FileText, ImagePlus, LogOut, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ExternalLink, FileText, ImagePlus, LogOut, Plus, Save, ShieldCheck, Trash2, Search, LayoutDashboard, Inbox, Activity, House, UserRound, Clock3, Blocks, FolderKanban, Menu, Share2, SearchCheck, Palette, Images, Copy, RotateCcw, X, type LucideIcon } from 'lucide-react';
 import { mergePortfolio, portfolioDefaults, type PortfolioData, type EditableSection, type TimelineEntry, type SkillEntry, type MenuLink } from '@/lib/portfolio-defaults';
 import type { Project } from '@/lib/projects';
 import ThemeStudio from './ThemeStudio';
@@ -20,25 +20,62 @@ const groups: {heading:string;items:{key:View;label:string}[]}[] = [
   { heading:'Files',items:[{key:'media',label:'Media Library'}, {key:'resume',label:'Resume manager'}]},
 ];
 const editable: EditableSection[]=['hero','about','timeline','skills','projects','navigation','socials','seo','theme'];
+const navIcons:Record<View,LucideIcon>={
+  overview:LayoutDashboard,inbox:Inbox,downloads:Activity,hero:House,about:UserRound,timeline:Clock3,
+  skills:Blocks,projects:FolderKanban,navigation:Menu,socials:Share2,seo:SearchCheck,theme:Palette,
+  media:Images,resume:FileText,
+};
+const pageGuides:Record<View,string>={
+  overview:'Your portfolio at a glance. Jump to an editor or check pending drafts.',
+  inbox:'Read, filter, and organize incoming messages. Delivery integration is still paused.',
+  downloads:'Review CV download activity once the gated workflow is connected.',
+  hero:'Update your name, introduction, job chips and typing highlights.',
+  about:'Edit your story and choose the portrait that appears on the public site.',
+  timeline:'Organize education and career milestones in the order visitors see.',
+  skills:'Manage services, skill tags, grouped tools and technology icons.',
+  projects:'Create polished project case studies, screenshots and statistics.',
+  navigation:'Customize the labels and order of your website menu.',
+  socials:'Keep links to your public profiles current.',
+  seo:'Customize search listings, social-sharing previews and canonical links.',
+  theme:'Create and preview complete website palettes and custom presets.',
+  media:'Browse, upload, label, and safely organize portfolio images.',
+  resume:'Upload private CV versions; public download access stays disabled.',
+};
 const ui={
   label:'mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-[#64748B]',
-  input:'w-full rounded-xl border border-[#DCE5EA] bg-[#FFFFFF] px-4 py-3 text-[14px] text-[#162536] outline-none transition focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/15',
-  card:'rounded-2xl border border-[#DCE5EA] bg-[#FFFFFF] p-5 md:p-6',
-  button:'inline-flex items-center justify-center gap-2 rounded-xl border border-[#DCE5EA] bg-[#F8FAFC] px-4 py-2.5 text-sm font-semibold text-[#26435A] transition hover:bg-[#E8F3EE] disabled:opacity-50',
+  input:'admin-field w-full rounded-xl px-4 py-3 text-sm outline-none',
+  card:'admin-card rounded-2xl p-5 md:p-7',
+  button:'admin-button inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold disabled:opacity-50',
   danger:'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium text-[#B42318] hover:bg-[#FFF1F2]/40',
 };
-function Field({label,value,onChange,multiline=false,placeholder='',type='text'}:{
-  label:string;value:string;onChange:(v:string)=>void;multiline?:boolean;placeholder?:string;type?:string
+function Field({label,value,onChange,multiline=false,placeholder='',type='text',hint,maxLength}:{
+  label:string;value:string;onChange:(v:string)=>void;multiline?:boolean;placeholder?:string;type?:string;hint?:string;maxLength?:number
 }){
-  return <label className="block"><span className={ui.label}>{label}</span>{multiline?
-    <textarea rows={4} className={ui.input+' min-h-[100px] resize-y'} placeholder={placeholder} value={value} onChange={e=>onChange(e.target.value)} />:
-    <input className={ui.input} type={type} placeholder={placeholder} value={value} onChange={e=>onChange(e.target.value)}/>}</label>;
+  return <label className="block">
+    <span className={ui.label}>{label}</span>
+    {multiline
+      ? <textarea rows={4} className={ui.input+' min-h-[120px] resize-y'} placeholder={placeholder} value={value} maxLength={maxLength} onChange={e=>onChange(e.target.value)}/>
+      : <input className={ui.input} type={type} placeholder={placeholder} value={value} maxLength={maxLength} onChange={e=>onChange(e.target.value)}/>
+    }
+    {(hint||multiline||maxLength)&&<span className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+      <span>{hint||''}</span><span>{maxLength?`${value.length}/${maxLength}`:multiline?`${value.length} characters`:''}</span>
+    </span>}
+  </label>;
 }
 function Lines({label,items,onChange}:{label:string;items:string[];onChange:(v:string[])=>void}){
-  return <Field label={label+' (one per line)'} multiline value={items.join('\n')} onChange={v=>onChange(v.split('\n').map(s=>s.trim()).filter(Boolean))}/>;
+  return <div className="space-y-2">
+    <Field label={label+' (one per line)'} multiline value={items.join('\n')} onChange={v=>onChange(v.split('\n').map(s=>s.trim()).filter(Boolean))} hint={`${items.length} item${items.length===1?'':'s'} · One item per line`}/>
+    {items.length>0&&<div className="flex flex-wrap gap-1.5">{items.slice(0,10).map((item,i)=><span key={i} className="admin-chip max-w-full truncate">{item}</span>)}{items.length>10&&<span className="admin-chip">+${items.length-10}</span>}</div>}
+  </div>;
 }
 function Panel({title,subtitle,children}:{title:string;subtitle?:string;children:ReactNode}){
-  return <section className={ui.card}><div className="mb-5"><h2 className="text-xl font-semibold text-slate-900">{title}</h2>{subtitle&&<p className="mt-2 text-sm leading-6 text-[#64748B]">{subtitle}</p>}</div>{children}</section>;
+  return <section className={ui.card}>
+    <div className="admin-panel-intro">
+      <h2 className="text-lg font-bold tracking-tight text-slate-900 md:text-xl">{title}</h2>
+      {subtitle&&<p className="mt-1.5 max-w-3xl text-sm leading-6 text-slate-500">{subtitle}</p>}
+    </div>
+    {children}
+  </section>;
 }
 function Move({up,down,remove}:{up:()=>void;down:()=>void;remove:()=>void}){
   return <div className="flex items-center gap-1.5">
@@ -59,6 +96,7 @@ export default function AdminDashboard() {
   const [password,setPassword]=useState('');
   const [loginError,setLoginError]=useState('');
   const [view,setView]=useState<View>('overview');
+  const [navSearch,setNavSearch]=useState('');
   const [data,setData]=useState<PortfolioData>(portfolioDefaults);
   const [draftKeys,setDraftKeys]=useState<Set<string>>(new Set());
   const [versions,setVersions]=useState<VersionRecord[]>([]);
@@ -255,10 +293,10 @@ export default function AdminDashboard() {
   };
   const project=data.projects.items[activeProject];
 
-  if(session==='checking') return <main className="flex min-h-screen items-center justify-center bg-[#F6F8FB] text-[#0F766E]">Verifying admin session…</main>;
-  if(session==='guest')return <main className="flex min-h-screen items-center justify-center bg-[#F6F8FB] p-5 text-[#162536]">
+  if(session==='checking') return <main className="admin-shell flex min-h-screen items-center justify-center bg-[#F6F8FB] text-[#0F766E]">Verifying admin session…</main>;
+  if(session==='guest')return <main className="admin-shell relative flex min-h-screen items-center justify-center bg-[#F6F8FB] p-5 text-[#162536]">
     <div className="absolute left-6 top-6 text-sm font-black uppercase tracking-widest text-[#0F766E]">SHIVAM / ADMIN</div>
-    <form onSubmit={login} className="w-full max-w-md rounded-3xl border border-[#DCE5EA] bg-[#FFFFFF] p-7 shadow-2xl sm:p-10">
+    <form onSubmit={login} className="admin-card w-full max-w-md rounded-3xl border border-[#DCE5EA] bg-[#FFFFFF] p-7 shadow-xl sm:p-10">
       <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EAF7F0] text-[#0F766E]"><ShieldCheck size={29}/></div>
       <h1 className="text-3xl font-black tracking-tight">Welcome back.</h1>
       <p className="mt-2 mb-8 text-sm leading-6 text-[#64748B]">Sign in with your authorized Supabase admin account. The portfolio remains public; editing is private.</p>
@@ -267,25 +305,36 @@ export default function AdminDashboard() {
         <label className="block"><span className={ui.label}>Password</span><input className={ui.input} value={password} onChange={e=>setPassword(e.target.value)} type="password" autoComplete="current-password" required minLength={6}/></label>
       </div>
       {loginError&&<p role="alert" className="mt-5 rounded-xl bg-red-950/40 p-3 text-sm text-red-200">{loginError}</p>}
-      <button disabled={busy||!email||!password} className="mt-7 w-full rounded-xl bg-[#0F766E] px-5 py-3.5 font-bold text-[#FFFFFF] transition hover:bg-[#115E59] disabled:opacity-50">{busy?'Signing in…':'Sign in securely →'}</button>
+      <button disabled={busy||!email||!password} className="admin-primary mt-7 w-full rounded-xl px-5 py-3.5 font-bold text-white disabled:opacity-50">{busy?'Signing in…':'Sign in securely →'}</button>
       <Link href="/" className="mt-5 block text-center text-xs text-[#64748B] hover:text-slate-900">← Back to portfolio</Link>
     </form>
   </main>;
-  return <main className="min-h-screen bg-[#F6F8FB] font-sans text-[#162536]">
+  return <main className="admin-shell min-h-screen bg-[#F6F8FB] font-sans text-[#162536]">
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="w-full border-b border-[#DCE5EA] bg-[#FFFFFF] lg:sticky lg:top-0 lg:h-screen lg:w-[260px] lg:flex-shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+      <aside className="admin-sidebar admin-scrollbar w-full border-b border-[#DCE5EA] bg-white lg:sticky lg:top-0 lg:h-screen lg:w-[272px] lg:flex-shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
         <div className="border-b border-[#DCE5EA] px-6 py-6">
           <Link href="/" className="text-xl font-black uppercase tracking-[-0.06em] text-slate-900">SHIVAM<span className="text-[#0F766E]">.</span></Link>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#64748B]">Portfolio control room</p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[#64748B]">Portfolio Studio · Admin</p>
         </div>
-        <nav className="flex gap-1 overflow-x-auto p-3 lg:block lg:space-y-5 lg:overflow-visible lg:p-5" aria-label="Admin sections">
-          {groups.map(group=><div key={group.heading} className="flex shrink-0 gap-1 lg:block">
-            <span className="hidden px-3 text-[10px] uppercase tracking-[0.2em] text-[#64748B] lg:mb-2 lg:block">{group.heading}</span>
-            {group.items.map(item=><button key={item.key} type="button" onClick={()=>{if(dirty && !(view==='media'&&item.key==='about')){setFail('You have unsaved edits. Save Draft before switching sections.');return;}setView(item.key);setNotice('');setFail('');}}
-              className={'whitespace-nowrap rounded-xl px-4 py-2.5 text-left text-xs font-semibold transition lg:my-0.5 lg:block lg:w-full lg:text-sm '+(view===item.key?'bg-[#DFF6EE] text-[#0F766E]':'text-[#51677B] hover:bg-[#F1F5F9] hover:text-slate-900')}>
-              {item.label}
+        <div className="px-3 pt-4 lg:px-5">
+          <label className="relative block">
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+            <span className="sr-only">Find editor panel</span>
+            <input className="admin-sidebar-search w-full rounded-xl py-2.5 pl-9 pr-3 text-sm" value={navSearch} onChange={e=>setNavSearch(e.target.value)} placeholder="Find a section..."/>
+          </label>
+        </div>
+        <nav className="admin-scrollbar flex gap-1 overflow-x-auto p-3 lg:block lg:space-y-5 lg:overflow-visible lg:p-5" aria-label="Admin sections">
+          {groups.map(group=>({...group,items:group.items.filter(item=>item.label.toLowerCase().includes(navSearch.trim().toLowerCase()))})).filter(group=>group.items.length>0).map(group=><div key={group.heading} className="flex shrink-0 gap-1 lg:block">
+            <span className="hidden px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 lg:mb-2 lg:block">{group.heading}</span>
+            {group.items.map(item=><button key={item.key} type="button" aria-current={view===item.key?'page':undefined}
+              onClick={()=>{if(view===item.key)return;if(dirty&&!(view==='media'&&item.key==='about')){setFail('Unsaved edits: save your draft before switching sections.');return;}setView(item.key);setNotice('');setFail('');}}
+              className={'admin-nav-item whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-xs font-semibold lg:my-0.5 lg:w-full lg:text-sm '+(view===item.key?'admin-nav-active':'text-slate-600 hover:bg-slate-50 hover:text-slate-900')}>
+              {(() => {const Icon=navIcons[item.key];return <Icon size={16} className="shrink-0 opacity-80"/>;})()}
+              <span className="flex-1">{item.label}</span>
+              {draftKeys.has(item.key)&&<span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" title="Saved draft"/>}
             </button>)}
           </div>)}
+          {groups.every(group=>!group.items.some(item=>item.label.toLowerCase().includes(navSearch.trim().toLowerCase())))&&<p className="px-3 py-4 text-xs text-slate-500">No sections match your search.</p>}
         </nav>
         <div className="hidden border-t border-[#DCE5EA] px-5 py-5 lg:block">
           <p className="truncate text-xs text-[#64748B]" title={email}>{email}</p>
@@ -294,23 +343,27 @@ export default function AdminDashboard() {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#DCE5EA] bg-[#FFFFFF] px-5 py-5 md:px-9">
-          <div><div className="text-[11px] uppercase tracking-[0.18em] text-[#64748B]">Admin / {view}{draftKeys.has(view)?' · Saved draft':''}{dirty?' · Unsaved edits':''}</div><h1 className="mt-1 text-xl font-bold capitalize text-slate-900 sm:text-2xl">{view.replace(/-/g,' ')}</h1></div>
+        <header className="admin-topbar flex flex-wrap items-center justify-between gap-4 border-b border-[#DCE5EA] bg-white px-5 py-5 md:px-9">
+          <div className="max-w-xl">
+             <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400"><span>Workspace / {view}</span>{dirty&&<span className="admin-chip admin-chip-draft">Unsaved changes</span>}{!dirty&&draftKeys.has(view)&&<span className="admin-chip admin-chip-saved">Private draft</span>}</div>
+             <h1 className="mt-1 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">{groups.flatMap(group=>group.items).find(item=>item.key===view)?.label||view}</h1>
+             <p className="mt-1 text-xs leading-5 text-slate-500">{pageGuides[view]}</p>
+           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/" target="_blank" rel="noopener noreferrer" className={ui.button}><ExternalLink size={15}/> View website</Link>
             {editable.includes(view as EditableSection)&&<>
               <button type="button" onClick={()=>setPreviewOpen(true)} className={ui.button}><ExternalLink size={15}/> Preview</button>
               {(dirty||draftKeys.has(view))&&<button type="button" onClick={discardDraft} disabled={busy} className={ui.button}>Discard</button>}
               <button type="button" onClick={save} disabled={busy} className={ui.button}><Save size={16}/>{busy?'Saving…':'Save Draft'}</button>
-              <button type="button" onClick={publish} disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-[#0F766E] px-5 py-2.5 text-sm font-extrabold text-[#FFFFFF] transition hover:bg-[#115E59] disabled:opacity-50"><Check size={16}/> Publish</button>
+              <button type="button" onClick={publish} disabled={busy} className="admin-primary inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-extrabold text-white disabled:opacity-50"><Check size={16}/> Publish</button>
             </>}
             <button type="button" onClick={logout} className={ui.button+' lg:hidden'}><LogOut size={15}/></button>
           </div>
         </header>
 
-        <div className="mx-auto max-w-6xl space-y-5 px-4 py-7 sm:px-6 md:px-9 md:py-10">
-          {notice&&<div role="status" className="flex items-start gap-2 rounded-xl border border-[#DCE5EA] bg-[#ECFDF5] px-4 py-3 text-sm text-[#0F766E]"><Check size={18} className="mt-0.5 shrink-0"/>{notice}</div>}
-          {fail&&<div role="alert" className="rounded-xl border border-[#DCE5EA] bg-[#FFF1F2] px-4 py-3 text-sm text-[#B42318]">{fail}</div>}
+        <div className="mx-auto max-w-7xl space-y-5 px-4 py-7 sm:px-6 md:px-9 md:py-10">
+          {notice&&<div role="status" className="admin-toast flex items-start gap-2 rounded-xl border border-[#DCE5EA] bg-[#ECFDF5] px-4 py-3 text-sm text-[#0F766E]"><Check size={18} className="mt-0.5 shrink-0"/>{notice}</div>}
+          {fail&&<div role="alert" className="admin-toast rounded-xl border border-[#DCE5EA] bg-[#FFF1F2] px-4 py-3 text-sm text-[#B42318]">{fail}</div>}
           {view==='overview'&&<>
             <Panel title="Portfolio workspace" subtitle="Save Draft keeps changes private; Preview shows pending edits, Publish makes them public. No GitHub push is needed for content.">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
