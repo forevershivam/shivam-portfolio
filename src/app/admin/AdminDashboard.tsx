@@ -473,9 +473,38 @@ export default function AdminDashboard() {
           {view==='downloads'&&<Panel title="CV download history" subtitle="This activity feed will start after we add the gated download endpoint. No download tracking is enabled yet.">
             {downloads.length===0?<p className="text-sm text-[#9EB3A6]">No CV download records yet.</p>:<div className="overflow-x-auto"><table className="w-full min-w-[540px] text-left text-sm"><thead className="text-xs uppercase text-[#82B495]"><tr><th className="p-3">Visitor</th><th className="p-3">Company</th><th className="p-3">Contact</th><th className="p-3">Date</th></tr></thead><tbody>{downloads.map(d=><tr className="border-t border-[#254536]" key={d.id}><td className="p-3">{d.visitor_name}</td><td className="p-3">{d.company_name}</td><td className="p-3">{d.contact_email||d.contact_phone||'—'}</td><td className="p-3">{new Date(d.downloaded_at).toLocaleDateString('en-IN')}</td></tr>)}</tbody></table></div>}
           </Panel>}
+          {editable.includes(view as EditableSection)&&<Panel title="Published version history" subtitle="Each Publish creates a snapshot. Restore copies an older version into Draft; the live website changes only after you Publish it.">
+            <div className="space-y-2">
+              {versions.filter(v=>v.section_key===view).length===0?<p className="text-sm text-[#98B8A5]">No published history yet. Your first Publish will create one.</p>:
+                versions.filter(v=>v.section_key===view).slice(0,20).map((version,i)=><div key={version.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#2F503C] bg-[#10271B] px-4 py-3">
+                  <div><p className="text-sm font-semibold text-white">{i===0?'Latest published snapshot':'Published version #'+version.id}</p><p className="mt-1 text-xs text-[#A4BEAC]">{new Date(version.published_at).toLocaleString('en-IN')}</p></div>
+                  <button type="button" className={ui.button} disabled={busy} onClick={()=>restoreVersion(version.id)}>Restore to Draft</button>
+                </div>)}
+            </div>
+          </Panel>}
           <p className="pb-4 text-xs leading-6 text-[#708C79]">Security: only Supabase-authorized admins can save content or access private records. Changes are read from the database after the new code is deployed. Email notifications remain paused.</p>
         </div>
       </div>
     </div>
+    {previewOpen&&<div className="fixed inset-0 z-[100] overflow-auto bg-[#06100B] p-3 sm:p-6" role="dialog" aria-modal="true" aria-label="Draft website preview">
+      <div className="mx-auto max-w-[1500px]">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#35523F] bg-[#102218] p-4">
+          <div><h2 className="font-semibold text-white">Live draft preview</h2><p className="mt-1 text-xs text-[#B1C6B9]">Unsaved edits appear here, but visitors still see the published site.</p></div>
+          <div className="flex flex-wrap gap-2"><button className={ui.button} type="button" onClick={()=>setPreviewWidth('desktop')}>Desktop</button><button className={ui.button} type="button" onClick={()=>setPreviewWidth('mobile')}>Mobile</button><button className={ui.button} type="button" onClick={()=>setPreviewOpen(false)}>Close preview ✕</button></div>
+        </div>
+        <div className="overflow-x-auto rounded-xl border border-[#345944] bg-[#0A0F0D] p-2">
+          <iframe ref={previewRef} title="Private portfolio preview" src="/admin/preview" onLoad={sendPreview}
+            className={'mx-auto block h-[78vh] min-h-[520px] rounded-lg border border-[#3A5844] bg-[#0A0F0D] '+(previewWidth==='mobile'?'w-[390px]':'w-full')}/>
+        </div>
+      </div>
+    </div>}
+    {pickerTarget&&<div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label="Choose portfolio image">
+      <div className="max-h-[86vh] w-full max-w-4xl overflow-auto rounded-2xl border border-[#3B684B] bg-[#0D2116] p-5">
+        <div className="mb-5 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold text-white">Choose image from Media Library</h2><p className="mt-1 text-xs text-[#9EBDA8]">Select a thumbnail to attach it to {pickerTarget==='about'?'About Me':pickerTarget==='seo'?'the social preview':'this project'}.</p></div><button type="button" className={ui.button} onClick={()=>setPickerTarget(null)}>Close ✕</button></div>
+        {media.length===0?<p className="rounded-xl border border-[#355940] p-5 text-sm">No images available. Close the picker and upload an image in Media Library first.</p>:<div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">{media.map(item=><button key={item.id} type="button" onClick={()=>attachImage(item.url)} className="overflow-hidden rounded-xl border border-[#3A6349] bg-[#193524] text-left transition hover:border-[#67DB9C]">
+          <img src={item.url} alt={item.alt_text||'Portfolio image'} className="h-36 w-full object-contain"/><span className="block truncate p-3 text-xs text-white">{item.alt_text||item.storage_path}</span>
+        </button>)}</div>}
+      </div>
+    </div>}
   </main>;
 }
