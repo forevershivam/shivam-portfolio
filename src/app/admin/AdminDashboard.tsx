@@ -394,20 +394,71 @@ export default function AdminDashboard() {
           {notice&&<div role="status" className="admin-toast flex items-start gap-2 rounded-xl border border-[#DCE5EA] bg-[#ECFDF5] px-4 py-3 text-sm text-[#0F766E]"><Check size={18} className="mt-0.5 shrink-0"/>{notice}</div>}
           {fail&&<div role="alert" className="admin-toast rounded-xl border border-[#DCE5EA] bg-[#FFF1F2] px-4 py-3 text-sm text-[#B42318]">{fail}</div>}
           {view==='overview'&&<>
-            <Panel title="Portfolio workspace" subtitle="Save Draft keeps changes private; Preview shows pending edits, Publish makes them public. No GitHub push is needed for content.">
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {[['Editable sections','9'],['Contact messages',counts.messages===null?'—':String(counts.messages)],['Tracked CV downloads',counts.downloads===null?'—':String(counts.downloads)],['Media files',counts.media===null?'—':String(counts.media)]].map(([k,v])=>
-                  <div key={k} className="rounded-xl border border-[#DCE5EA] bg-[#ECFDF5] p-5"><p className="text-xs text-[#64748B]">{k}</p><p className="mt-3 text-4xl font-black text-[#0F766E]">{v}</p></div>)}
+            <div className="relative overflow-hidden rounded-[26px] border border-[#C9E9DD] bg-gradient-to-br from-[#ECFDF5] via-white to-[#F0F7FF] px-6 py-7 shadow-sm sm:px-8">
+              <span className="admin-chip admin-chip-saved">PORTFOLIO STUDIO</span>
+              <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Your website, in your hands.</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Edit freely, inspect changes privately, and publish when ready. Your visitors only see published content.</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <button type="button" className={ui.button} onClick={()=>openView('hero')}><House size={16}/> Edit homepage</button>
+                <button type="button" className={ui.button} onClick={()=>openView('projects')}><FolderKanban size={16}/> Manage projects</button>
+                <button type="button" className={ui.button} onClick={()=>openView('theme')}><Palette size={16}/> Theme Studio</button>
+                <Link href="/" target="_blank" className={ui.button}><ExternalLink size={16}/> View website</Link>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {([
+                ['Editable sections',String(editable.length),LayoutDashboard],
+                ['Pending drafts',String(draftKeys.size),Save],
+                ['Inbox messages',counts.messages===null?'—':String(counts.messages),Inbox],
+                ['CV downloads',counts.downloads===null?'—':String(counts.downloads),Activity],
+              ] as [string,string,LucideIcon][]).map(([label,value,Icon])=><div key={label} className="admin-stat rounded-2xl p-5">
+                <div className="flex items-center justify-between gap-3"><span className="text-xs font-semibold text-slate-500">{label}</span><Icon size={19} className="text-teal-700"/></div>
+                <p className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">{value}</p>
+              </div>)}
+            </div>
+            <Panel title="Jump into an editor" subtitle="Every control is organized by what you want to update.">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {([
+                  ['hero','Homepage','Name and typing stats'],
+                  ['about','About me','Biography and portrait'],
+                  ['projects','Projects','Project case studies'],
+                  ['theme','Website colours','Palettes and fonts'],
+                  ['media','Media Library','Images and files'],
+                  ['seo','SEO & sharing','Google and social preview'],
+                ] as [View,string,string][]).map(([key,label,detail])=>{
+                  const Icon=navIcons[key];
+                  return <button type="button" key={key} onClick={()=>openView(key)}
+                    className="admin-item group flex items-center gap-3 text-left transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700"><Icon size={19}/></span>
+                    <span className="min-w-0 flex-1"><span className="block font-semibold text-slate-800">{label}</span><span className="mt-0.5 block text-xs text-slate-500">{detail}</span></span>
+                    <span className="text-slate-400 group-hover:text-teal-700">›</span>
+                  </button>;
+                })}
               </div>
             </Panel>
-            <Panel title="What is ready?" subtitle="Supabase-secured content, media gallery, draft history, theme presets and admin-only records.">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-xl bg-[#EAF7F0] p-4"><b className="text-[#0F766E]">✓ Content editor</b><p className="mt-2 text-sm text-[#64748B]">Hero, About, Timeline, Skills, Projects, Navigation, Socials, SEO and full Design Studio.</p></div>
-                <div className="rounded-xl bg-[#FFFAEB] p-4"><b className="text-[#9A6700]">⏸ Email workflows paused</b><p className="mt-2 text-sm text-[#8A660F]">Contact notifications and gated CV download delivery are intentionally scheduled for later.</p></div>
+            <Panel title="Publishing checklist" subtitle="Quick checks before sharing your portfolio.">
+              <div className="grid gap-3 lg:grid-cols-3">
+                {([
+                  ['Profile photo',Boolean(data.about.photoUrl),'about','Portrait is selected'],
+                  ['SEO description',Boolean(data.seo.title&&data.seo.description),'seo','Title and description'],
+                  ['Project case studies',data.projects.items.length>0,'projects','Titles, links and screenshots'],
+                ] as [string,boolean,View,string][]).map(([label,done,target,detail])=><button type="button" key={label} onClick={()=>openView(target)}
+                  className="admin-item flex items-start gap-3 text-left">
+                  <span className={'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full '+(done?'bg-emerald-100 text-teal-700':'bg-amber-100 text-amber-700')}>{done?'✓':'!'}</span>
+                  <span><strong className="block text-sm text-slate-800">{label}</strong><span className="mt-1 block text-xs text-slate-500">{detail}</span></span>
+                </button>)}
               </div>
+              <p className="mt-4 text-xs text-slate-500">Email notifications and gated CV delivery are paused. Counts reflect database records.</p>
             </Panel>
           </>}
-          {view==='hero'&&<Panel title="Homepage hero" subtitle="Edit your name, introduction and job-role chips. Existing FlowField animation is preserved.">
+          {view==='hero'&&<>
+            <div className="admin-item bg-gradient-to-br from-teal-50 to-white p-6">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-teal-700">HOMEPAGE QUICK PREVIEW</span>
+              <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900">{data.hero.firstName} <span className="text-teal-700">{data.hero.lastName}</span></h2>
+              <p className="mt-2 max-w-2xl text-sm text-slate-600">{data.hero.description}</p>
+              <div className="mt-4 flex flex-wrap gap-1.5">{data.hero.roles.map((role,i)=><span key={i} className="admin-chip">{role}</span>)}</div>
+            </div>
+            <Panel title="Homepage hero" subtitle="Edit your name, introduction and job-role chips. The animations stay intact.">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="First name" value={data.hero.firstName} onChange={v=>change(d=>{d.hero.firstName=v;})}/>
               <Field label="Last name" value={data.hero.lastName} onChange={v=>change(d=>{d.hero.lastName=v;})}/>
@@ -418,7 +469,7 @@ export default function AdminDashboard() {
                <p className="text-xs text-[#64748B]">These two numbers update in both the homepage highlight and the Skills section.</p>
               <Lines label="Job role chips" items={data.hero.roles} onChange={v=>change(d=>{d.hero.roles=v;})}/>
             </div>
-          </Panel>}
+          </Panel></>}
           {view==='about'&&<Panel title="About me" subtitle="Portrait remains above the animated FlowField layer. Upload a new cutout using Photo & media.">
             <div className="space-y-4">
               <Field label="Introduction" multiline value={data.about.intro} onChange={v=>change(d=>{d.about.intro=v;})}/>
