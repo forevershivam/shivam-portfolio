@@ -1,10 +1,10 @@
 import { ImageResponse } from 'next/og';
 import { getPublicPortfolio } from '@/lib/portfolio-supabase';
 
-export const size = { width: 1200, height: 630 };
-export const contentType = 'image/png';
+const size = { width: 1200, height: 630 };
 
-export default async function OpenGraphImage() {
+export const dynamic='force-dynamic';
+export async function GET() {
   const {hero,theme}=await getPublicPortfolio();
   const accent=theme.colors.accent;
   return new ImageResponse(

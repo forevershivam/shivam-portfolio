@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata():Promise<Metadata> {
   const { seo } = await getPublicPortfolio();
   const canonical = /^https:\/\//.test(seo.siteUrl) ? seo.siteUrl.replace(/\/$/,'') : site.url;
-  const image = seo.socialImage || canonical+'/opengraph-image';
+  const image = seo.socialImage || canonical+'/api/og';
   return {
     ...siteMetadata,
     metadataBase:new URL(canonical),
