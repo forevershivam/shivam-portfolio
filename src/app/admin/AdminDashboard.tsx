@@ -470,12 +470,18 @@ export default function AdminDashboard() {
               <Lines label="Job role chips" items={data.hero.roles} onChange={v=>change(d=>{d.hero.roles=v;})}/>
             </div>
           </Panel></>}
-          {view==='about'&&<Panel title="About me" subtitle="Portrait remains above the animated FlowField layer. Upload a new cutout using Photo & media.">
+          {view==='about'&&<Panel title="About me" subtitle="Write your story, check how it reads, and manage your portrait without touching the page animation.">
+             <div className="admin-note mb-5 rounded-xl p-3 text-xs">Portrait uploads are managed in the Media Library. Your existing About content stays in Supabase until you publish a new version.</div>
             <div className="space-y-4">
               <Field label="Introduction" multiline value={data.about.intro} onChange={v=>change(d=>{d.about.intro=v;})}/>
               <Field label="Biography (blank lines separate paragraphs)" multiline value={data.about.body} onChange={v=>change(d=>{d.about.body=v;})}/>
               <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"><Field label="Portrait image URL" value={data.about.photoUrl} onChange={v=>change(d=>{d.about.photoUrl=v;})}/><button type="button" className={ui.button} onClick={()=>setPickerTarget('about')}>Choose from library</button></div>
-              {data.about.photoUrl&&<img src={data.about.photoUrl} alt="About preview" className="h-48 w-40 rounded-xl border border-[#DCE5EA] bg-[#F1F5F9] object-contain object-bottom"/>}
+              <div className="admin-inset flex flex-wrap items-center gap-5 p-4">
+                 {data.about.photoUrl?<img src={data.about.photoUrl} alt="Current About portrait" className="h-40 w-32 rounded-xl border border-slate-200 bg-white object-contain object-bottom"/>:<div className="flex h-40 w-32 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white"><Images size={32} className="text-slate-300"/></div>}
+                 <div className="space-y-2"><h3 className="font-bold text-slate-800">Portrait preview</h3><p className="max-w-sm text-xs leading-5 text-slate-500">{data.about.photoUrl?'This image is selected for the About section.':'No portrait selected. Choose one from your library.'}</p>
+                   <div className="flex flex-wrap gap-2"><button type="button" className={ui.button+' !text-xs'} onClick={()=>setPickerTarget('about')}>Choose image</button>{data.about.photoUrl&&<button type="button" className={ui.button+' !text-xs'} onClick={()=>change(d=>{d.about.photoUrl='';})}>Clear image</button>}</div>
+                 </div>
+               </div>
             </div>
           </Panel>}
           {view==='timeline'&&<Panel title="Education & career timeline" subtitle="Reorder, duplicate and edit milestones. Changes won't go public until Publish.">
@@ -567,7 +573,13 @@ export default function AdminDashboard() {
             </div>}
             <button type="button" className={ui.button+' mt-5'} onClick={()=>{change(d=>{const p=makeProject();p.slug='new-project-'+(d.projects.items.length+1);d.projects.items.push(p);});setActiveProject(data.projects.items.length);}}><Plus size={16}/> Add project</button>
           </Panel>}
-          {view==='navigation'&&<Panel title="Header & menu links" subtitle="Anchor links must use the /#section-id format to keep smooth scrolling and transitions working.">
+          {view==='navigation'&&<Panel title="Header & menu links" subtitle="Reorder your links and decide which ones appear in the expanded menu.">
+            <div className="admin-inset mb-5 p-4"><p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Menu preview</p>
+              <div className="flex flex-wrap items-center gap-2">{data.navigation.links.filter(l=>!l.menuOnly).map((l,i)=><span key={i} className="admin-chip !bg-white !text-teal-700">{l.name}</span>)}
+                {data.navigation.links.filter(l=>!l.menuOnly).length===0&&<span className="text-xs text-amber-700">All links are menu-only.</span>}
+              </div>
+              <p className="mt-3 text-xs text-slate-500">Anchor links must use /#section-id. Menu-only links still appear in the expanded menu.</p>
+            </div>
             <div className="space-y-4">{data.navigation.links.map((item,i)=><div key={i} className="rounded-xl border border-[#DCE5EA] bg-[#FFFFFF] p-4">
               <div className="mb-3 flex justify-end"><Move up={()=>change(d=>{d.navigation.links=move(d.navigation.links,i,i-1);})} down={()=>change(d=>{d.navigation.links=move(d.navigation.links,i,i+1);})} remove={()=>change(d=>{d.navigation.links.splice(i,1);})}/></div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -579,18 +591,30 @@ export default function AdminDashboard() {
               <button type="button" className={ui.button} onClick={()=>change(d=>{d.navigation.links.push({name:'New link',href:'/#contact'} as MenuLink);})}><Plus size={15}/> Add link</button>
             </div>
           </Panel>}
-          {view==='socials'&&<Panel title="Social profile links" subtitle="Public profile URLs only. Private notification email is never stored here.">
-            <div className="space-y-4">{(['github','linkedin','instagram'] as const).map(k=>
-              <Field key={k} label={k} value={data.socials[k]} onChange={v=>change(d=>{d.socials[k]=v;})}/>)}</div>
+          {view==='socials'&&<Panel title="Social profile links" subtitle="Update your public profiles and test that every URL opens the correct account.">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {(['github','linkedin','instagram'] as const).map(k=><div key={k} className="admin-item space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold capitalize text-slate-800">{k}</h3>
+                  <span className={'admin-chip '+(data.socials[k].startsWith('https://')?'admin-chip-saved':'admin-chip-draft')}>{data.socials[k].startsWith('https://')?'Valid format':'Check URL'}</span>
+                </div>
+                <Field label="Profile URL" type="url" value={data.socials[k]} onChange={v=>change(d=>{d.socials[k]=v;})}/>
+                <div className="flex flex-wrap gap-2">
+                  {data.socials[k].startsWith('https://')&&<a href={data.socials[k]} target="_blank" rel="noopener noreferrer" className={ui.button+' !text-xs'}><ExternalLink size={14}/> Open profile</a>}
+                  <button type="button" className={ui.button+' !text-xs'} disabled={!data.socials[k]} onClick={()=>copyText(data.socials[k],k+' URL')}><Copy size={14}/> Copy</button>
+                </div>
+              </div>)}
+            </div>
+            <p className="mt-5 text-xs leading-5 text-slate-500">Only public profile links belong here. Private notification addresses are never shown on your website.</p>
           </Panel>}
           {view==='seo'&&<Panel title="SEO & social sharing" subtitle="Control the website title, Google description, canonical URL and WhatsApp/LinkedIn preview image.">
              <div className="space-y-4">
-               <Field label="Site title" value={data.seo.title} onChange={v=>change(d=>{d.seo.title=v;})}/>
-               <Field label="Meta description" multiline value={data.seo.description} onChange={v=>change(d=>{d.seo.description=v;})}/>
-               <Field label="Canonical website URL" value={data.seo.siteUrl} onChange={v=>change(d=>{d.seo.siteUrl=v;})}/>
+               <Field label="Site title" maxLength={180} hint="Aim for a concise, recognizable page title." value={data.seo.title} onChange={v=>change(d=>{d.seo.title=v;})}/>
+               <Field label="Meta description" multiline maxLength={400} hint="Keep important words near the beginning; search engines may truncate this." value={data.seo.description} onChange={v=>change(d=>{d.seo.description=v;})}/>
+               <Field label="Canonical website URL" type="url" hint="The canonical public domain used for search indexing." value={data.seo.siteUrl} onChange={v=>change(d=>{d.seo.siteUrl=v;})}/>
                <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"><Field label="Social preview image URL (1200×630 recommended)" value={data.seo.socialImage} onChange={v=>change(d=>{d.seo.socialImage=v;})}/><button type="button" className={ui.button} onClick={()=>setPickerTarget('seo')}>Choose from library</button></div>
                {data.seo.socialImage&&<img src={data.seo.socialImage} alt="Social card preview" className="h-auto max-h-44 w-full rounded-xl border border-[#DCE5EA] object-contain" />}
-               <div className="rounded-xl border border-[#DCE5EA] bg-[#F7FAFC] p-4"><p className="text-xs text-[#64748B]">Search / share preview</p><h3 className="mt-2 text-base font-semibold text-slate-900">{data.seo.title}</h3><p className="mt-1 text-xs text-[#64748B]">{data.seo.siteUrl}</p><p className="mt-2 text-xs text-[#62758A]">{data.seo.description}</p></div>
+               <div className="rounded-xl border border-[#DCE5EA] bg-white p-5 shadow-sm"><p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Search / share preview</p><h3 className="mt-2 text-base font-semibold text-slate-900">{data.seo.title}</h3><p className="mt-1 text-xs text-[#64748B]">{data.seo.siteUrl}</p><p className="mt-2 text-xs text-[#62758A]">{data.seo.description}</p></div>
              </div>
            </Panel>}
            {view==='theme'&&<Panel title="Website Theme & Design Studio" subtitle="Complete colour families, semantic roles, typography, custom presets, contrast checks and rollback. This controls the public website—not this admin panel.">
