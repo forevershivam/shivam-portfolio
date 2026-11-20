@@ -6,8 +6,8 @@ type Props={
   value:PortfolioTheme;onChange:(value:PortfolioTheme)=>void;
   presets:ThemePreset[];onSavePresets:(value:ThemePreset[])=>Promise<void>;
 };
-const input='w-full rounded-lg border border-[#DCE5EA] bg-[#FFFFFF] px-3 py-2 text-[#162536] outline-none focus:border-[#60D99A]';
-const btn='rounded-lg border border-[#DCE5EA] bg-[#F2F7F5] px-3 py-2 text-sm font-semibold text-[#0F766E] hover:bg-[#E7F5EE] disabled:opacity-40';
+const input='admin-field w-full rounded-lg px-3 py-2 text-sm';
+const btn='admin-button rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-40';
 const labels:Record<keyof ThemeTypography,string>={
   headings:'Headings',body:'Body text',buttons:'Buttons',accents:'Decorative / italic'
 };
@@ -51,6 +51,19 @@ export default function ThemeStudio({value,onChange,presets,onSavePresets}:Props
     if(!redo.length)return;setUndo(history=>[...history,structuredClone(value)]);
     onChange(redo[redo.length-1]);setRedo(history=>history.slice(0,-1));
   };
+  const exportTheme=()=>{
+    const name='shivam-theme-'+new Date().toISOString().slice(0,10)+'.json';
+    const blob=new Blob([JSON.stringify({name:'Shivam Custom Theme',theme:value},null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');
+    a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);
+    setMessage('Theme exported to JSON.');
+  };
+  const copyPalette=async()=>{
+    try{
+      await navigator.clipboard.writeText(Object.entries(value.colors).map(([role,hex])=>`${role}: ${hex}`).join('\n'));
+      setMessage('Colour roles copied to clipboard.');
+    }catch{setMessage('Clipboard is unavailable in this browser.');}
+  };
   const saveCustom=async()=>{
     if(!presetName.trim()){setMessage('Enter a preset name.');return;}
     setSaving(true);try{
@@ -79,10 +92,10 @@ export default function ThemeStudio({value,onChange,presets,onSavePresets}:Props
     ['Button text / button',value.colors.buttonText,value.colors.button],
     ['Text on light area',value.colors.lightText,value.colors.lightBackground],
   ] as const;
-  return <div className="space-y-7 text-sm">
+  return <div className="admin-theme-studio space-y-7 text-sm">
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#DCE5EA] bg-[#EDF8F3] p-4">
-      <div><h3 className="font-semibold text-slate-900">Design history</h3><p className="mt-1 text-xs text-[#64748B]">Undo / redo unsaved changes. Published versions can be restored in the History panel below.</p></div>
-      <div className="flex gap-2"><button className={btn} disabled={!undo.length} onClick={undoEdit} type="button">↶ Undo</button><button className={btn} disabled={!redo.length} onClick={redoEdit} type="button">↷ Redo</button><button type="button" className={btn} onClick={()=>apply(defaultTheme)}>Reset to Emerald</button></div>
+      <div><h3 className="font-semibold text-slate-900">Theme workspace</h3><p className="mt-1 text-xs text-[#64748B]">Undo / redo unsaved changes. Published versions can be restored in the History panel below.</p></div>
+      <div className="flex gap-2"><button className={btn} type="button" onClick={exportTheme}>Export JSON</button><button className={btn} type="button" onClick={copyPalette}>Copy colours</button><button className={btn} disabled={!undo.length} onClick={undoEdit} type="button">↶ Undo</button><button className={btn} disabled={!redo.length} onClick={redoEdit} type="button">↷ Redo</button><button type="button" className={btn} onClick={()=>apply(defaultTheme)}>Reset to Emerald</button></div>
     </div>
 
     <section className="rounded-xl border border-[#DCE5EA] p-4">
@@ -108,6 +121,17 @@ export default function ThemeStudio({value,onChange,presets,onSavePresets}:Props
 
     <section className="rounded-xl border border-[#DCE5EA] p-4">
       <h3 className="text-base font-bold text-slate-900">Preset library</h3><p className="mb-4 mt-1 text-[#64748B]">Built-in schemes plus your own custom presets. These save colours, fonts and corner styles together.</p>
+      <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        {builtInPresets.map(p=><button key={p.id} type="button" onClick={()=>{setSelectedId(p.id);apply(p.theme);}}
+          className={'overflow-hidden rounded-xl border p-2 text-left transition hover:-translate-y-0.5 hover:shadow-md '+(selectedId===p.id?'border-teal-500 bg-teal-50':'border-slate-200 bg-white')}>
+          <div className="flex h-12 overflow-hidden rounded-lg border border-black/5">
+            <span className="flex-1" style={{background:p.theme.colors.background}}/>
+            <span className="flex-1" style={{background:p.theme.colors.accent}}/>
+            <span className="flex-1" style={{background:p.theme.colors.lightBackground}}/>
+          </div>
+          <span className="mt-2 block truncate text-xs font-semibold text-slate-800">{p.name}</span>
+        </button>)}
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <label><span className="mb-2 block text-xs text-[#64748B]">Choose preset</span><select className={input} value={selectedId} onChange={e=>setSelectedId(e.target.value)}>{allPresets.map(p=><option key={p.id} value={p.id}>{p.name}{p.id.startsWith('custom-')?' (Custom)':''}</option>)}</select></label>
         <div className="flex items-end"><button type="button" className={btn+' w-full'} disabled={!selected} onClick={()=>selected&&apply(selected.theme)}>Apply selected preset</button></div>
