@@ -1,15 +1,19 @@
 'use client';
 
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowDown, ArrowUp, Check, ExternalLink, FileText, ImagePlus, LogOut, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
 import { mergePortfolio, portfolioDefaults, type PortfolioData, type EditableSection, type TimelineEntry, type SkillEntry, type MenuLink } from '@/lib/portfolio-defaults';
 import type { Project } from '@/lib/projects';
+import ThemeStudio from './ThemeStudio';
+import type { ThemePreset } from '@/lib/portfolio-theme';
 
 type View = EditableSection | 'overview' | 'media' | 'resume' | 'inbox' | 'downloads';
 type Message = { id:string;sender_name:string;sender_email:string;message:string;status:string;created_at:string };
 type DownloadRecord = { id:string;visitor_name:string;company_name:string;contact_email:string|null;contact_phone:string|null;downloaded_at:string };
 type ResumeRecord = { id:string;display_name:string;is_active:boolean;created_at:string };
+type MediaRecord = {id:string;storage_path:string;alt_text:string;created_at:string;published:boolean;url:string};
+type VersionRecord = {id:number;section_key:string;published_at:string};
 const groups: {heading:string;items:{key:View;label:string}[]}[] = [
   { heading:'Workspace',items:[{key:'overview',label:'Overview'}, {key:'inbox',label:'Contact inbox'}, {key:'downloads',label:'CV activity'}]},
   { heading:'Site editor',items:[{key:'hero',label:'Homepage'}, {key:'about',label:'About me'}, {key:'timeline',label:'Timeline'}, {key:'skills',label:'Skills & services'}, {key:'projects',label:'Projects'}, {key:'navigation',label:'Navigation'}, {key:'socials',label:'Social links'}, {key:'seo',label:'SEO'}, {key:'theme',label:'Theme'}]},
@@ -56,6 +60,17 @@ export default function AdminDashboard() {
   const [loginError,setLoginError]=useState('');
   const [view,setView]=useState<View>('overview');
   const [data,setData]=useState<PortfolioData>(portfolioDefaults);
+  const [published,setPublished]=useState<PortfolioData>(portfolioDefaults);
+  const [draftKeys,setDraftKeys]=useState<Set<string>>(new Set());
+  const [versions,setVersions]=useState<VersionRecord[]>([]);
+  const [media,setMedia]=useState<MediaRecord[]>([]);
+  const [presets,setPresets]=useState<ThemePreset[]>([]);
+  const [counts,setCounts]=useState<{messages:number|null;downloads:number|null;media:number|null}>({messages:null,downloads:null,media:null});
+  const [dirty,setDirty]=useState(false);
+  const [previewOpen,setPreviewOpen]=useState(false);
+  const [previewWidth,setPreviewWidth]=useState<'desktop'|'mobile'>('desktop');
+  const [pickerTarget,setPickerTarget]=useState<'about'|'seo'|'project'|null>(null);
+  const previewRef=useRef<HTMLIFrameElement>(null);
   const [messages,setMessages]=useState<Message[]>([]);
   const [downloads,setDownloads]=useState<DownloadRecord[]>([]);
   const [resumes,setResumes]=useState<ResumeRecord[]>([]);
@@ -69,7 +84,7 @@ export default function AdminDashboard() {
 
   const change=(f:(draft:PortfolioData)=>void)=>{
     setData(prev=>{const next=structuredClone(prev);f(next);return next;});
-    setNotice('');
+    setNotice('');setDirty(true);
   };
   const move=<T,>(items:T[],index:number,to:number)=>{
     if(to<0||to>=items.length)return items;
@@ -82,16 +97,25 @@ export default function AdminDashboard() {
     return json;
   };
   const load=async()=>{
-    const [content,records]=await Promise.all([
-      request('/api/admin/sections'),
-      request('/api/admin/records'),
+    const [content,records,images,presetData]=await Promise.all([
+      request('/api/admin/sections'),request('/api/admin/records'),
+      request('/api/admin/media'),request('/api/admin/presets'),
     ]);
-    const overrides: Record<string,object>={};
-    for (const row of content.sections||[]) overrides[row.section_key]=row.content;
-    setData(mergePortfolio(overrides as Partial<PortfolioData>));
+    const live: Record<string,object>={};
+    const draft: Record<string,object>={};
+    for(const row of content.sections||[])if(row.published)live[row.section_key]=row.content;
+    for(const row of content.drafts||[])draft[row.section_key]=row.content;
+    setPublished(mergePortfolio(live as Partial<PortfolioData>));
+    setData(mergePortfolio({...live,...draft} as Partial<PortfolioData>));
+    setDraftKeys(new Set(Object.keys(draft)));
+    setVersions(content.versions||[]);
+    setMedia(images.media||[]);
+    setPresets(presetData.presets||[]);
+    setCounts(records.counts||{messages:null,downloads:null,media:null});
     setMessages(records.messages||[]);
     setDownloads(records.downloads||[]);
     setResumes(records.resumes||[]);
+    setDirty(false);
   };
   useEffect(()=>{
     let active=true;
@@ -119,7 +143,7 @@ export default function AdminDashboard() {
   };
   const logout=async()=>{
     setBusy(true);
-    try{await request('/api/admin/auth',{method:'DELETE'});}finally{setSession('guest');setEmail('');setPassword('');setData(portfolioDefaults);setBusy(false);}
+    try{await request('/api/admin/auth',{method:'DELETE'});}finally{setSession('guest');setEmail('');setPassword('');setData(portfolioDefaults);setDraftKeys(new Set());setDirty(false);setBusy(false);}
   };
   const save=async()=>{
     if(!editable.includes(view as EditableSection))return;
