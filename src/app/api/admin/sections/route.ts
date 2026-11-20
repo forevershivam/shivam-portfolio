@@ -30,6 +30,11 @@ const textValue = (value: unknown, limit = 10000) => typeof value === 'string' &
 const arr = (value: unknown, max: number) => Array.isArray(value) && value.length <= max;
 const url = (value: unknown) => textValue(value, 1000) && (value === '' || /^https:\/\//.test(value as string) || /^\/(?!\/)/.test(value as string));
 const listOfText = (value: unknown, max = 100) => arr(value, max) && (value as unknown[]).every(x => textValue(x, 400));
+const validCanonical = (value:unknown) => {
+  if (typeof value!=='string'||value.length>500)return false;
+  try {const parsed=new URL(value);return parsed.protocol==='https:'&&!!parsed.hostname&&!parsed.username&&!parsed.password;}
+  catch{return false;}
+};
 
 function valid(key: string, value: unknown): boolean {
   if (!isRecord(value) || JSON.stringify(value).length > 125000) return false;
@@ -40,7 +45,7 @@ function valid(key: string, value: unknown): boolean {
     case 'skills': return textValue(value.description) && arr(value.services, 25) && (value.services as unknown[]).every(x=>isRecord(x)&&['id','title','description'].every(k=>textValue(x[k],3000))&&listOfText(x.items,50)) && arr(value.stack,20) && (value.stack as unknown[]).every(x=>isRecord(x)&&textValue(x.id,80)&&textValue(x.title,200)&&arr(x.technologies,80)&&(x.technologies as unknown[]).every(t=>isRecord(t)&&textValue(t.name,120)&&textValue(t.category,80)&&url(t.icon)));
     case 'navigation': return arr(value.links, 12) && (value.links as unknown[]).every(x=>isRecord(x)&&textValue(x.name,60)&&textValue(x.href,200)&&/^\/#[-a-z0-9]+$/.test(x.href as string));
     case 'socials': return ['github','linkedin','instagram'].every(k=>url(value[k]));
-    case 'seo': return textValue(value.title,180) && textValue(value.description,400) && url(value.socialImage) && (value.siteUrl==='' || (url(value.siteUrl) && /^https:\/\//.test(value.siteUrl as string)));
+    case 'seo': return textValue(value.title,180) && textValue(value.description,400) && url(value.socialImage) && (value.siteUrl==='' || validCanonical(value.siteUrl));
     case 'theme': {
       const allowedColors=['accent','accentLight','accentDark','heading','text','muted','background','surface','lightBackground','lightText','border','button','buttonHover','buttonText','outline'];
       const colors=value.colors,fonts=value.typography,rad=value.radius;

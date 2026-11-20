@@ -60,7 +60,6 @@ export default function AdminDashboard() {
   const [loginError,setLoginError]=useState('');
   const [view,setView]=useState<View>('overview');
   const [data,setData]=useState<PortfolioData>(portfolioDefaults);
-  const [published,setPublished]=useState<PortfolioData>(portfolioDefaults);
   const [draftKeys,setDraftKeys]=useState<Set<string>>(new Set());
   const [versions,setVersions]=useState<VersionRecord[]>([]);
   const [media,setMedia]=useState<MediaRecord[]>([]);
@@ -105,7 +104,6 @@ export default function AdminDashboard() {
     const draft: Record<string,object>={};
     for(const row of content.sections||[])if(row.published)live[row.section_key]=row.content;
     for(const row of content.drafts||[])draft[row.section_key]=row.content;
-    setPublished(mergePortfolio(live as Partial<PortfolioData>));
     setData(mergePortfolio({...live,...draft} as Partial<PortfolioData>));
     setDraftKeys(new Set(Object.keys(draft)));
     setVersions(content.versions||[]);
@@ -456,7 +454,7 @@ export default function AdminDashboard() {
                </div>
              </article>)}</div>}
            </Panel>}
-           {view==='resume'&&<Panel title="Private resume manager" subtitle="PDF is private. Uploading does NOT enable public downloads; the visitor form and alerts are paused until tomorrow.">
+           {view==='resume'&&<Panel title="Private resume manager" subtitle="PDF is private. Uploading does NOT enable public downloads; the visitor form and alerts have not been enabled yet.">
             <form onSubmit={upload} className="space-y-4"><input id="admin-file-input" className={ui.input} type="file" accept="application/pdf" onChange={e=>{setFile(e.target.files?.[0]||null);setUploadKind('resume');}}/>
               <button disabled={busy||!file} type="submit" className={ui.button}><FileText size={16}/>{busy?'Uploading…':'Upload private PDF'}</button></form>
             <div className="mt-7 space-y-2">{resumes.length===0?<p className="text-sm text-[#9EB3A6]">No resume uploaded yet.</p>:resumes.map(r=>
@@ -474,6 +472,10 @@ export default function AdminDashboard() {
             {downloads.length===0?<p className="text-sm text-[#9EB3A6]">No CV download records yet.</p>:<div className="overflow-x-auto"><table className="w-full min-w-[540px] text-left text-sm"><thead className="text-xs uppercase text-[#82B495]"><tr><th className="p-3">Visitor</th><th className="p-3">Company</th><th className="p-3">Contact</th><th className="p-3">Date</th></tr></thead><tbody>{downloads.map(d=><tr className="border-t border-[#254536]" key={d.id}><td className="p-3">{d.visitor_name}</td><td className="p-3">{d.company_name}</td><td className="p-3">{d.contact_email||d.contact_phone||'—'}</td><td className="p-3">{new Date(d.downloaded_at).toLocaleDateString('en-IN')}</td></tr>)}</tbody></table></div>}
           </Panel>}
           {editable.includes(view as EditableSection)&&<Panel title="Published version history" subtitle="Each Publish creates a snapshot. Restore copies an older version into Draft; the live website changes only after you Publish it.">
+            <button type="button" className={ui.button+' mb-4'} onClick={()=>{
+              if(!window.confirm('Load original default content into the editor? Save Draft and Publish to apply it.'))return;
+              change(d=>{(d as unknown as Record<string,unknown>)[view]=structuredClone(portfolioDefaults[view as EditableSection]);});
+            }}>Restore original defaults to editor</button>
             <div className="space-y-2">
               {versions.filter(v=>v.section_key===view).length===0?<p className="text-sm text-[#98B8A5]">No published history yet. Your first Publish will create one.</p>:
                 versions.filter(v=>v.section_key===view).slice(0,20).map((version,i)=><div key={version.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#2F503C] bg-[#10271B] px-4 py-3">
@@ -482,7 +484,7 @@ export default function AdminDashboard() {
                 </div>)}
             </div>
           </Panel>}
-          <p className="pb-4 text-xs leading-6 text-[#708C79]">Security: only Supabase-authorized admins can save content or access private records. Changes are read from the database after the new code is deployed. Email notifications remain paused.</p>
+          <p className="pb-4 text-xs leading-6 text-[#708C79]">Security: only Supabase-authorized admins can save content or access private records. Drafts stay private; only Publish updates the public website. Email notifications remain paused.</p>
         </div>
       </div>
     </div>

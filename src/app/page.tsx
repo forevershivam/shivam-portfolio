@@ -15,7 +15,11 @@ import { site } from '@/lib/site';
 export const dynamic = 'force-dynamic';
 export async function generateMetadata():Promise<Metadata> {
   const { seo } = await getPublicPortfolio();
-  const canonical = /^https:\/\//.test(seo.siteUrl) ? seo.siteUrl.replace(/\/$/,'') : site.url;
+  let canonical=site.url;
+  try {
+    const candidate=new URL(seo.siteUrl);
+    if(candidate.protocol==='https:'&&candidate.hostname)canonical=candidate.toString().replace(/\/$/,'');
+  }catch { /* Default to verified production domain. */ }
   const image = seo.socialImage || canonical+'/api/og';
   return {
     ...siteMetadata,
