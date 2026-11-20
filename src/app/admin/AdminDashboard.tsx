@@ -150,10 +150,84 @@ export default function AdminDashboard() {
     setBusy(true);setNotice('');setFail('');
     try{
       await request('/api/admin/sections',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:view,content:data[view as EditableSection]})});
-      setNotice('Saved! Once this code is deployed, updated content appears on the website after refresh.');
-    }catch(e){setFail(e instanceof Error?e.message:'Unable to save');}
+      setDraftKeys(previous=>new Set([...previous,view]));
+      setDirty(false);
+      setNotice('Draft saved privately. Public website is unchanged until you click Publish.');
+    }catch(e){setFail(e instanceof Error?e.message:'Unable to save draft');}
     finally{setBusy(false);}
   };
+  const publish=async()=>{
+    if(!editable.includes(view as EditableSection))return;
+    setBusy(true);setNotice('');setFail('');
+    try{
+      if(dirty||!draftKeys.has(view)){
+        await request('/api/admin/sections',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:view,content:data[view as EditableSection]})});
+      }
+      await request('/api/admin/sections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:view,action:'publish'})});
+      await load();setNotice('Published! Refresh your public website to see the update.');
+    }catch(e){setFail(e instanceof Error?e.message:'Unable to publish');}
+    finally{setBusy(false);}
+  };
+  const restoreVersion=async(id:number)=>{
+    if(!editable.includes(view as EditableSection))return;
+    if(dirty&&!window.confirm('This replaces your unsaved changes with an older version. Continue?'))return;
+    setBusy(true);setFail('');setNotice('');
+    try{
+      await request('/api/admin/sections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:view,action:'restore',versionId:id})});
+      await load();setNotice('Version restored to Draft. Preview it and Publish when ready.');
+    }catch(e){setFail(e instanceof Error?e.message:'Could not restore version');}
+    finally{setBusy(false);}
+  };
+  const discardDraft=async()=>{
+    if(!editable.includes(view as EditableSection)||!window.confirm('Discard this section\'s saved draft and unsaved edits?'))return;
+    setBusy(true);setFail('');
+    try{
+      if(draftKeys.has(view))await request('/api/admin/sections?section='+view,{method:'DELETE'});
+      await load();setNotice('Draft discarded. Published content is unchanged.');
+    }catch(e){setFail(e instanceof Error?e.message:'Could not discard draft');}
+    finally{setBusy(false);}
+  };
+  const savePresets=async(next:ThemePreset[])=>{
+    const result=await request('/api/admin/presets',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({presets:next})});
+    setPresets(result.presets||next);
+  };
+  const refreshMedia=async()=>{const result=await request('/api/admin/media');setMedia(result.media||[]);};
+  const deleteImage=async(id:string)=>{
+    if(!window.confirm('Delete this image permanently? Used images cannot be removed.'))return;
+    setBusy(true);setFail('');
+    try{await request('/api/admin/media?id='+id,{method:'DELETE'});await refreshMedia();setNotice('Image deleted.');}
+    catch(e){setFail(e instanceof Error?e.message:'Cannot delete image');}
+    finally{setBusy(false);}
+  };
+  const attachImage=(url:string)=>{
+    if(!pickerTarget)return;
+    change(d=>{
+      if(pickerTarget==='about')d.about.photoUrl=url;
+      if(pickerTarget==='seo')d.seo.socialImage=url;
+      if(pickerTarget==='project'&&d.projects.items[activeProject]){
+        const p=d.projects.items[activeProject];
+        if(!p.images.includes(url))p.images.push(url);
+        if(!p.hoverImage)p.hoverImage=url;
+      }
+    });
+    setPickerTarget(null);setNotice('Image attached. Save Draft to keep it.');
+  };
+  const sendPreview=()=>{
+    previewRef.current?.contentWindow?.postMessage({kind:'portfolio-preview-content',content:data},window.location.origin);
+  };
+  useEffect(()=>{
+    if(previewOpen)sendPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[data,previewOpen]);
+  useEffect(()=>{
+    const ready=(event:MessageEvent)=>{if(event.origin===window.location.origin&&event.source===previewRef.current?.contentWindow&&event.data?.kind==='portfolio-preview-ready')sendPreview();};
+    window.addEventListener('message',ready);return()=>window.removeEventListener('message',ready);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[data]);
+  useEffect(()=>{
+    const warn=(event:BeforeUnloadEvent)=>{if(dirty){event.preventDefault();event.returnValue='';}};
+    window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);
+  },[dirty]);
   const upload=async(e:FormEvent)=>{
     e.preventDefault();if(!file)return;
     setBusy(true);setNotice('');setFail('');
@@ -163,11 +237,12 @@ export default function AdminDashboard() {
       setFile(null);
       const form=document.getElementById('admin-file-input') as HTMLInputElement|null;
       if(form)form.value='';
-      if(uploadKind==='resume'){setNotice('Resume privately uploaded. Public download is still disabled until the gated download flow is built.');await load();}
+      if(uploadKind==='resume'){setNotice('Resume privately uploaded. Public download remains disabled.');await load();}
       else{
         setRecentImage(r.url);
+        await refreshMedia();
         if(uploadKind==='photo')change(d=>{d.about.photoUrl=r.url;});
-        setNotice(uploadKind==='photo'?'Portrait uploaded. Open About me and click Save to publish its URL.':'Image uploaded. Copy its URL into a project image field and Save Projects.');
+        setNotice(uploadKind==='photo'?'Portrait uploaded. Open About me, then Save Draft and Publish.':'Image uploaded. Use the image picker to add it to a project.');
       }
     }catch(e){setFail(e instanceof Error?e.message:'Upload failed');}
     finally{setBusy(false);}
