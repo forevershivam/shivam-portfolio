@@ -14,6 +14,11 @@
 
   --spacing-section: clamp(6rem, 12vw, 11rem);
 
+  --ease-in-expo: cubic-bezier(0.1, 0, 0.3, 1);
+  --ease-custom: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+@theme {
   --color-cream: #E2E8E4;
   --color-ink: #0A0F0D;
   --color-accent: #34D399;
@@ -41,8 +46,6 @@
   --color-gray-btn: #46574F;
   --color-footer-bg: #D7E0DA;
   --color-footer-border: #C5CFC9;
-  --ease-in-expo: cubic-bezier(0.1, 0, 0.3, 1);
-  --ease-custom: cubic-bezier(0.76, 0, 0.24, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -91,8 +94,8 @@ body {
 }
 
 ::selection {
-  background: #34D399;
-  color: #0A0F0D;
+  background: var(--color-accent, #34D399);
+  color: var(--color-ink, #0A0F0D);
 }
 
 .bg-primary {
@@ -221,7 +224,7 @@ body.cursor-disabled * {
 }
 
 :focus-visible {
-  outline: 2px solid #34D399;
+  outline: 2px solid var(--portfolio-outline, #34D399);
   outline-offset: 3px;
   border-radius: 2px;
 }
@@ -269,9 +272,19 @@ body.cursor-disabled * {
 
 /* The homepage hero is light: use dark, high-contrast navigation text. */
 body:has(.shivam-hero) .home-aware-nav .text-warm {
-  color: #1C3528 !important;
+  color: var(--color-warm, #1C3528) !important;
 }
 body:has(.shivam-hero) .home-aware-nav a:hover,
 body:has(.shivam-hero) .home-aware-nav a:focus-visible {
-  color: #047857 !important;
+  color: var(--color-accent-muted, #047857) !important;
 }
+
+/* Public portfolio theme; admin interface keeps its independent styling. */
+.portfolio-live .font-display { font-family: var(--portfolio-heading-font, var(--font-space-grotesk)) !important; }
+.portfolio-live .font-sans { font-family: var(--portfolio-body-font, var(--font-geist-sans)) !important; }
+.portfolio-live .font-serif, .portfolio-live .serif-accent { font-family: var(--portfolio-accent-font, var(--font-instrument-serif)) !important; }
+.portfolio-live button { font-family: var(--portfolio-button-font, var(--font-geist-sans)); }
+.portfolio-live .portfolio-primary-button { background: var(--portfolio-button); color: var(--portfolio-button-text); border-radius: var(--portfolio-radius-button); }
+.portfolio-live .portfolio-primary-button:hover { background: var(--portfolio-button-hover); }
+.portfolio-live .portfolio-themed-card { border-color: var(--portfolio-border); border-radius: var(--portfolio-radius-card); }
+.portfolio-live ::selection { background: var(--color-accent); }

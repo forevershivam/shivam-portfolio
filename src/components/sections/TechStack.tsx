@@ -30,7 +30,8 @@ export const STACK_SECTIONS:StackCategory[]=[
 ];
 
 const TechStack = () => {
-  const sections = usePortfolio().skills.stack;
+  const { skills, hero } = usePortfolio();
+  const sections = skills.stack;
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -240,13 +241,13 @@ const TechStack = () => {
           <div className="grid grid-cols-2 gap-4 sm:gap-8">
             <div>
               <p className="font-mono text-4xl font-semibold text-accent sm:text-5xl">
-                47 <span className="text-sm text-cream">WPM</span>
+                {hero.typingWpm} <span className="text-sm text-cream">WPM</span>
               </p>
               <p className="mt-2 text-sm text-gray-soft">Typing speed</p>
             </div>
             <div>
               <p className="font-mono text-4xl font-semibold text-accent sm:text-5xl">
-                98%
+                {hero.typingAccuracy}%
               </p>
               <p className="mt-2 text-sm text-gray-soft">Accuracy</p>
             </div>

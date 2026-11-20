@@ -142,7 +142,7 @@ export default function HomeBanner() {
           <em
             aria-hidden="true"
             data-hero-line
-            className="inline-block font-serif text-[clamp(4.2rem,8.55vw,8.6rem)] font-normal italic normal-case tracking-[-0.06em] text-[#34D399]"
+            className="inline-block font-serif text-[clamp(4.2rem,8.55vw,8.6rem)] font-normal italic normal-case tracking-[-0.06em] text-accent"
           >
             {hero.lastName}
           </em>
@@ -154,7 +154,7 @@ export default function HomeBanner() {
         >
           {hero.description}
           <span className="mt-2 block">
-            <strong className="font-semibold text-[#0A0F0D]">{hero.typing}</strong>
+            <strong className="font-semibold text-[#0A0F0D]">{`${hero.typingWpm} WPM typing speed · ${hero.typingAccuracy}% accuracy`}</strong>
             <span className="text-[#596C61]"> (1-minute test)</span>
           </span>
         </p>

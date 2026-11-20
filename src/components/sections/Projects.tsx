@@ -345,7 +345,7 @@ function MobileSnapProjects({ projects, router }: MobileSnapProjectsProps) {
                   className="mc-num font-mono font-black leading-none"
                   style={{
                     fontSize: 'clamp(2rem, 9vw, 2.6rem)',
-                    color: '#34D399',
+                    color: 'var(--color-accent)',
                     letterSpacing: '-0.03em',
                   }}
                 >
@@ -388,7 +388,7 @@ function MobileSnapProjects({ projects, router }: MobileSnapProjectsProps) {
                   </span>
                   <span
                     className="flex items-center justify-center w-9 h-9 rounded-full text-[#0A0F0D] text-sm"
-                    style={{ background: '#34D399', boxShadow: '0 0 16px rgba(52, 211, 153, 0.35)' }}
+                    style={{ background: 'var(--color-accent)', boxShadow: '0 0 16px rgba(52, 211, 153, 0.35)' }}
                   >
                     →
                   </span>
