@@ -288,3 +288,8 @@ body:has(.shivam-hero) .home-aware-nav a:focus-visible {
 .portfolio-live .portfolio-primary-button:hover { background: var(--portfolio-button-hover); }
 .portfolio-live .portfolio-themed-card { border-color: var(--portfolio-border); border-radius: var(--portfolio-radius-card); }
 .portfolio-live ::selection { background: var(--color-accent); }
+
+/* Semantic design roles for frequently used portfolio UI elements. */
+.portfolio-live .text-cream { color: var(--portfolio-heading); }
+.portfolio-live .portfolio-primary-button { font-family:var(--portfolio-button-font); }
+.portfolio-live .portfolio-primary-button:focus-visible { outline-color:var(--portfolio-outline); }

@@ -39,11 +39,11 @@ export default async function Home() {
         banner={<HomeBanner />}
         about={<About />}
       >
-        <CurvedSectionDivider curveColor="#0A0F0D" bottomColor="#E2E8E4" />
+        <CurvedSectionDivider curveColor={content.theme.colors.background} bottomColor={content.theme.colors.lightBackground} />
         <section className="relative z-20 bg-cream">
           <Projects />
         </section>
-        <CurvedSectionDivider curveColor="#E2E8E4" bottomColor="#0A0F0D" />
+        <CurvedSectionDivider curveColor={content.theme.colors.lightBackground} bottomColor={content.theme.colors.background} />
         <div className="relative z-25 bg-ink overflow-hidden">
           <Contact />
           <Footer />

@@ -118,11 +118,11 @@ export default function HomeBanner() {
     <section
       ref={sectionRef}
       id="top"
-      className="shivam-hero relative flex min-h-[100dvh] items-center overflow-hidden bg-[#E2E8E4] px-6 pb-24 pt-32 text-[#0A0F0D] sm:px-8 md:px-12 md:pb-28 lg:px-16"
+      className="shivam-hero relative flex min-h-[100dvh] items-center overflow-hidden bg-cream px-6 pb-24 pt-32 text-ink sm:px-8 md:px-12 md:pb-28 lg:px-16"
     >
       <FlowField light />
       <div
-        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-[#E2E8E4]/75 via-transparent to-[#E2E8E4]/20"
+        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-cream/75 via-transparent to-cream/20"
         aria-hidden="true"
       />
 
@@ -150,12 +150,12 @@ export default function HomeBanner() {
 
         <p
           ref={descriptionRef}
-          className="mb-7 max-w-[680px] font-sans text-base leading-relaxed text-[#45524B] sm:text-lg md:text-xl"
+          className="mb-7 max-w-[680px] font-sans text-base leading-relaxed text-warm sm:text-lg md:text-xl"
         >
           {hero.description}
           <span className="mt-2 block">
-            <strong className="font-semibold text-[#0A0F0D]">{`${hero.typingWpm} WPM typing speed · ${hero.typingAccuracy}% accuracy`}</strong>
-            <span className="text-[#596C61]"> (1-minute test)</span>
+            <strong className="font-semibold text-ink">{`${hero.typingWpm} WPM typing speed · ${hero.typingAccuracy}% accuracy`}</strong>
+            <span className="text-warm"> (1-minute test)</span>
           </span>
         </p>
 
@@ -167,7 +167,7 @@ export default function HomeBanner() {
           {hero.roles.map((role) => (
             <li
               key={role}
-              className="rounded-full border border-[#BAC8C0] bg-white/75 px-4 py-2 text-xs font-semibold text-[#24372C] transition-colors duration-300 hover:border-[#078456]/70 hover:text-[#078456] sm:text-sm"
+              className="rounded-full border border-border bg-white/75 px-4 py-2 text-xs font-semibold text-warm transition-colors duration-300 hover:border-accent/70 hover:text-accent sm:text-sm"
             >
               {role}
             </li>

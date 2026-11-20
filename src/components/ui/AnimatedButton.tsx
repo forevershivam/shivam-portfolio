@@ -87,7 +87,11 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 
     gsap.set(ripple, { left: x, top: y, scale: 0, opacity: 1 });
     gsap.to(ripple, { scale: finalScale, opacity: 0.6, duration: 0.6, ease: 'power2.out' });
-    gsap.to(button, { backgroundColor: hoverBgColor, duration: 0.4, ease: 'power2.out' });
+    const computed = window.getComputedStyle(button);
+    const nextColor = variant==='primary'
+      ? computed.getPropertyValue('--portfolio-button-hover').trim() || hoverBgColor
+      : hoverBgColor;
+    gsap.to(button, { backgroundColor: nextColor, duration: 0.4, ease: 'power2.out' });
   };
 
   const handleButtonMouseLeave = () => {
@@ -95,7 +99,11 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
     const ripple = rippleRef.current;
     if (!button || !ripple) return;
     gsap.to(ripple, { scale: 0, opacity: 0, duration: 0.5, ease: 'power2.out' });
-    gsap.to(button, { backgroundColor: originalBgColor, duration: 0.4, ease: 'power2.out' });
+    const computed = window.getComputedStyle(button);
+    const nextColor = variant==='primary'
+      ? computed.getPropertyValue('--portfolio-button').trim() || originalBgColor
+      : originalBgColor;
+    gsap.to(button, { backgroundColor: nextColor, duration: 0.4, ease: 'power2.out' });
   };
 
   useEffect(() => {
@@ -133,7 +141,7 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleButtonMouseLeave}
         disabled={disabled}
-        className={`relative text-xs md:text-sm outline-none overflow-hidden h-10 md:h-12 px-4 sm:px-6 md:px-8 rounded-full ${bgColor} ${textColor} ${borderColor} group cursor-pointer font-medium inline-flex items-center justify-center ${className}`}
+        className={`relative text-xs md:text-sm outline-none overflow-hidden h-10 md:h-12 px-4 sm:px-6 md:px-8 rounded-full ${variant==='primary'?'portfolio-primary-button':''} ${bgColor} ${textColor} ${borderColor} group cursor-pointer font-medium inline-flex items-center justify-center ${className}`}
         style={{ transformOrigin: 'center' }}
         {...props}
       >
