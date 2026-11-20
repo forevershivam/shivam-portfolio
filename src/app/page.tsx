@@ -9,11 +9,25 @@ import HomeScrollOrchestrator from '@/components/home/HomeScrollOrchestrator';
 import { PortfolioContentProvider } from '@/components/providers/PortfolioContentProvider';
 import { getPublicPortfolio } from '@/lib/portfolio-supabase';
 import { siteMetadata } from '@/lib/metadata';
+import type { Metadata } from 'next';
+import { site } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
-export async function generateMetadata() {
+export async function generateMetadata():Promise<Metadata> {
   const { seo } = await getPublicPortfolio();
-  return { ...siteMetadata, title: seo.title, description: seo.description };
+  const canonical = /^https:\/\//.test(seo.siteUrl) ? seo.siteUrl.replace(/\/$/,'') : site.url;
+  const image = seo.socialImage || canonical+'/opengraph-image';
+  return {
+    ...siteMetadata,
+    metadataBase:new URL(canonical),
+    title:seo.title,description:seo.description,
+    alternates:{canonical},
+    openGraph:{
+      title:seo.title,description:seo.description,url:canonical,siteName:'Shivam Sharma Portfolio',
+      type:'website',images:[{url:image,width:1200,height:630,alt:seo.title}],
+    },
+    twitter:{card:'summary_large_image',title:seo.title,description:seo.description,images:[image]},
+  };
 }
 
 export default async function Home() {

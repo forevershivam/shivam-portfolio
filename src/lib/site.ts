@@ -2,7 +2,7 @@ export const site={
  name:'Shivam Sharma',firstName:'Shivam',lastName:'Sharma',handle:'stillshivam',
  brand:'shivam.data',email:'shivamsharmanot@outlook.com',
  location:'Delhi, India',timeZone:'Asia/Kolkata',timeZoneLabel:'IST',
- url:process.env.NEXT_PUBLIC_SITE_URL||(process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000'),
+ url:process.env.NEXT_PUBLIC_SITE_URL||'https://stillshivam.vercel.app',
  tagline:'Data Analyst | Excel, SQL, Power BI & MIS Reporting',
  roles:['Back Office Executive','MIS Executive','Associate Analyst','Data Entry']
 } as const;
