@@ -6,8 +6,8 @@ type Props={
   value:PortfolioTheme;onChange:(value:PortfolioTheme)=>void;
   presets:ThemePreset[];onSavePresets:(value:ThemePreset[])=>Promise<void>;
 };
-const input='w-full rounded-lg border border-[#35523F] bg-[#102A1D] px-3 py-2 text-[#EDFAF0] outline-none focus:border-[#60D99A]';
-const btn='rounded-lg border border-[#365944] bg-[#183726] px-3 py-2 text-sm font-semibold text-[#D3F8E2] hover:bg-[#254C35] disabled:opacity-40';
+const input='w-full rounded-lg border border-[#DCE5EA] bg-[#FFFFFF] px-3 py-2 text-[#162536] outline-none focus:border-[#60D99A]';
+const btn='rounded-lg border border-[#DCE5EA] bg-[#F2F7F5] px-3 py-2 text-sm font-semibold text-[#0F766E] hover:bg-[#E7F5EE] disabled:opacity-40';
 const labels:Record<keyof ThemeTypography,string>={
   headings:'Headings',body:'Body text',buttons:'Buttons',accents:'Decorative / italic'
 };
@@ -80,47 +80,47 @@ export default function ThemeStudio({value,onChange,presets,onSavePresets}:Props
     ['Text on light area',value.colors.lightText,value.colors.lightBackground],
   ] as const;
   return <div className="space-y-7 text-sm">
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#305840] bg-[#11291C] p-4">
-      <div><h3 className="font-semibold text-white">Design history</h3><p className="mt-1 text-xs text-[#AEC5B5]">Undo / redo unsaved changes. Published versions can be restored in the History panel below.</p></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#DCE5EA] bg-[#EDF8F3] p-4">
+      <div><h3 className="font-semibold text-slate-900">Design history</h3><p className="mt-1 text-xs text-[#64748B]">Undo / redo unsaved changes. Published versions can be restored in the History panel below.</p></div>
       <div className="flex gap-2"><button className={btn} disabled={!undo.length} onClick={undoEdit} type="button">↶ Undo</button><button className={btn} disabled={!redo.length} onClick={redoEdit} type="button">↷ Redo</button><button type="button" className={btn} onClick={()=>apply(defaultTheme)}>Reset to Emerald</button></div>
     </div>
 
-    <section className="rounded-xl border border-[#305840] p-4">
-      <h3 className="text-base font-bold text-white">Colour family · 50–950</h3><p className="mb-4 mt-1 text-[#A8C2AF]">Choose a base colour, generate matching shades, then assign each shade to a role.</p>
+    <section className="rounded-xl border border-[#DCE5EA] p-4">
+      <h3 className="text-base font-bold text-slate-900">Colour family · 50–950</h3><p className="mb-4 mt-1 text-[#64748B]">Choose a base colour, generate matching shades, then assign each shade to a role.</p>
       <div className="mb-4 flex flex-wrap items-center gap-3"><input aria-label="Choose base colour" type="color" className="h-12 w-16 cursor-pointer rounded-lg" value={isHex(base)?base:value.colors.accent} onChange={e=>setBase(e.target.value)}/><input className={input+' !w-32'} value={base} onChange={e=>setBase(e.target.value)}/><button type="button" disabled={!isHex(base)} className={btn} onClick={()=>apply(makeThemeFromAccent(base))}>Apply harmonized accent</button>
-      <label className="min-w-[170px]"><span className="mb-1 block text-xs text-[#B0C8B8]">Shade click updates</span><select className={input} value={shadeRole} onChange={e=>setShadeRole(e.target.value as PaletteRole)}>{(Object.keys(paletteRoles) as PaletteRole[]).map(key=><option value={key} key={key}>{paletteRoles[key]}</option>)}</select></label></div>
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 xl:grid-cols-11">{Object.entries(shades).map(([shade,hex])=><button key={shade} type="button" title={'Use '+hex+' for '+paletteRoles[shadeRole]} onClick={()=>updateColor(shadeRole,hex)} className="rounded-xl border border-[#3E5A47] bg-[#102218] p-1.5 text-center"><span className="block h-12 rounded-lg" style={{backgroundColor:hex}}/><span className="mt-1 block text-xs text-white">{shade}</span><span className="block text-[10px] text-[#B4CEBA]">{hex}</span></button>)}</div>
+      <label className="min-w-[170px]"><span className="mb-1 block text-xs text-[#64748B]">Shade click updates</span><select className={input} value={shadeRole} onChange={e=>setShadeRole(e.target.value as PaletteRole)}>{(Object.keys(paletteRoles) as PaletteRole[]).map(key=><option value={key} key={key}>{paletteRoles[key]}</option>)}</select></label></div>
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 xl:grid-cols-11">{Object.entries(shades).map(([shade,hex])=><button key={shade} type="button" title={'Use '+hex+' for '+paletteRoles[shadeRole]} onClick={()=>updateColor(shadeRole,hex)} className="rounded-xl border border-[#DCE5EA] bg-[#F8FAFC] p-1.5 text-center"><span className="block h-12 rounded-lg" style={{backgroundColor:hex}}/><span className="mt-1 block text-xs text-slate-900">{shade}</span><span className="block text-[10px] text-[#64748B]">{hex}</span></button>)}</div>
     </section>
 
-    <section className="rounded-xl border border-[#305840] p-4">
-      <h3 className="text-base font-bold text-white">Colour roles</h3><p className="mb-4 mt-1 text-[#A8C2AF]">Each role is saved separately: headings, text, backgrounds, buttons, hover, outlines, cards and borders.</p>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{(Object.keys(paletteRoles) as PaletteRole[]).map(key=><div key={key} className="rounded-xl border border-[#2C4A37] bg-[#102319] p-3">
-        <label className="mb-2 block text-xs font-semibold text-[#CBF0D8]">{paletteRoles[key]}</label>
+    <section className="rounded-xl border border-[#DCE5EA] p-4">
+      <h3 className="text-base font-bold text-slate-900">Colour roles</h3><p className="mb-4 mt-1 text-[#64748B]">Each role is saved separately: headings, text, backgrounds, buttons, hover, outlines, cards and borders.</p>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{(Object.keys(paletteRoles) as PaletteRole[]).map(key=><div key={key} className="rounded-xl border border-[#DCE5EA] bg-[#FFFFFF] p-3">
+        <label className="mb-2 block text-xs font-semibold text-[#0F766E]">{paletteRoles[key]}</label>
         <div className="flex items-center gap-2"><input type="color" aria-label={paletteRoles[key]} value={value.colors[key]} onChange={e=>updateColor(key,e.target.value)} className="h-10 w-12 cursor-pointer rounded-md"/><HexEditor label={paletteRoles[key]} value={value.colors[key]} onCommit={hex=>updateColor(key,hex)} /></div>
       </div>)}</div>
     </section>
 
-    <section className="rounded-xl border border-[#305840] p-4">
-      <h3 className="text-base font-bold text-white">Typography library</h3><p className="mb-4 mt-1 text-[#A8C2AF]">Fonts already bundled in your website. Choose one for each role.</p>
-      <div className="grid gap-4 sm:grid-cols-2">{(Object.keys(labels) as (keyof ThemeTypography)[]).map(key=><label key={key} className="block"><span className="mb-2 block text-xs font-semibold text-[#D9F4E1]">{labels[key]}</span><select className={input} value={value.typography[key]} onChange={e=>updateFont(key,e.target.value)}>{Object.entries(fontChoices).map(([id,option])=><option key={id} value={id}>{option.label}</option>)}</select><span className="mt-2 block text-lg text-white" style={{fontFamily:fontChoices[value.typography[key]].css}}>Aa Bb Cc — Design preview</span></label>)}</div>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">{(['buttons','cards'] as const).map(key=><label key={key}><span className="block text-xs text-[#CDE7D6]">{key==='buttons'?'Button corner radius':'Card corner radius'}: {value.radius[key]}px</span><input className="mt-2 w-full accent-emerald-400" type="range" min="0" max="48" value={value.radius[key]} onChange={e=>apply({...value,radius:{...value.radius,[key]:Number(e.target.value)}})}/></label>)}</div>
+    <section className="rounded-xl border border-[#DCE5EA] p-4">
+      <h3 className="text-base font-bold text-slate-900">Typography library</h3><p className="mb-4 mt-1 text-[#64748B]">Fonts already bundled in your website. Choose one for each role.</p>
+      <div className="grid gap-4 sm:grid-cols-2">{(Object.keys(labels) as (keyof ThemeTypography)[]).map(key=><label key={key} className="block"><span className="mb-2 block text-xs font-semibold text-[#0F766E]">{labels[key]}</span><select className={input} value={value.typography[key]} onChange={e=>updateFont(key,e.target.value)}>{Object.entries(fontChoices).map(([id,option])=><option key={id} value={id}>{option.label}</option>)}</select><span className="mt-2 block text-lg text-slate-900" style={{fontFamily:fontChoices[value.typography[key]].css}}>Aa Bb Cc — Design preview</span></label>)}</div>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">{(['buttons','cards'] as const).map(key=><label key={key}><span className="block text-xs text-[#0F766E]">{key==='buttons'?'Button corner radius':'Card corner radius'}: {value.radius[key]}px</span><input className="mt-2 w-full accent-emerald-400" type="range" min="0" max="48" value={value.radius[key]} onChange={e=>apply({...value,radius:{...value.radius,[key]:Number(e.target.value)}})}/></label>)}</div>
     </section>
 
-    <section className="rounded-xl border border-[#305840] p-4">
-      <h3 className="text-base font-bold text-white">Preset library</h3><p className="mb-4 mt-1 text-[#A8C2AF]">Built-in schemes plus your own custom presets. These save colours, fonts and corner styles together.</p>
+    <section className="rounded-xl border border-[#DCE5EA] p-4">
+      <h3 className="text-base font-bold text-slate-900">Preset library</h3><p className="mb-4 mt-1 text-[#64748B]">Built-in schemes plus your own custom presets. These save colours, fonts and corner styles together.</p>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label><span className="mb-2 block text-xs text-[#D3EBD9]">Choose preset</span><select className={input} value={selectedId} onChange={e=>setSelectedId(e.target.value)}>{allPresets.map(p=><option key={p.id} value={p.id}>{p.name}{p.id.startsWith('custom-')?' (Custom)':''}</option>)}</select></label>
+        <label><span className="mb-2 block text-xs text-[#64748B]">Choose preset</span><select className={input} value={selectedId} onChange={e=>setSelectedId(e.target.value)}>{allPresets.map(p=><option key={p.id} value={p.id}>{p.name}{p.id.startsWith('custom-')?' (Custom)':''}</option>)}</select></label>
         <div className="flex items-end"><button type="button" className={btn+' w-full'} disabled={!selected} onClick={()=>selected&&apply(selected.theme)}>Apply selected preset</button></div>
       </div>
-      <div className="mt-4 flex flex-wrap items-end gap-2"><label className="min-w-[200px] flex-1"><span className="mb-2 block text-xs text-[#D3EBD9]">Custom preset name</span><input className={input} maxLength={65} value={presetName} placeholder="e.g. Shivam Ocean V2" onChange={e=>setPresetName(e.target.value)}/></label><button type="button" className={btn} disabled={saving||presets.length>=30} onClick={saveCustom}>Save as custom preset</button></div>
+      <div className="mt-4 flex flex-wrap items-end gap-2"><label className="min-w-[200px] flex-1"><span className="mb-2 block text-xs text-[#64748B]">Custom preset name</span><input className={input} maxLength={65} value={presetName} placeholder="e.g. Shivam Ocean V2" onChange={e=>setPresetName(e.target.value)}/></label><button type="button" className={btn} disabled={saving||presets.length>=30} onClick={saveCustom}>Save as custom preset</button></div>
       {selectedId.startsWith('custom-')&&<div className="mt-3 flex flex-wrap gap-2"><button type="button" className={btn} disabled={saving} onClick={()=>changePreset('rename')}>Rename</button><button type="button" className={btn} disabled={saving} onClick={()=>changePreset('replace')}>Update from current</button><button type="button" className={btn} disabled={saving||presets.length>=30} onClick={()=>changePreset('duplicate')}>Duplicate</button><button type="button" className={btn} disabled={saving} onClick={()=>changePreset('delete')}>Delete</button></div>}
-      {message&&<p role="status" className="mt-3 text-xs text-[#9FECC1]">{message}</p>}
+      {message&&<p role="status" className="mt-3 text-xs text-[#0F766E]">{message}</p>}
     </section>
 
-    <section className="rounded-xl border border-[#305840] p-4">
-      <h3 className="text-base font-bold text-white">Contrast & accessibility</h3><p className="mt-1 text-xs text-[#B0C6B7]">WCAG AA normal-text target: 4.5:1. Check before publishing; this is advisory, not an automatic correction.</p>
+    <section className="rounded-xl border border-[#DCE5EA] p-4">
+      <h3 className="text-base font-bold text-slate-900">Contrast & accessibility</h3><p className="mt-1 text-xs text-[#64748B]">WCAG AA normal-text target: 4.5:1. Check before publishing; this is advisory, not an automatic correction.</p>
       <div className="mt-3 space-y-2">{contrastRows.map(([label,fore,back])=>{
-        const ratio=contrastRatio(fore,back);return <div key={label} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#31523F] px-3 py-2"><span>{label}</span><span className={ratio>=4.5?'text-[#86F0B1]':'text-[#FFD39B]'}>{ratio.toFixed(2)}:1 · {ratio>=4.5?'AA pass':'Check contrast'}</span></div>;
+        const ratio=contrastRatio(fore,back);return <div key={label} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#DCE5EA] px-3 py-2"><span>{label}</span><span className={ratio>=4.5?'text-[#0F766E]':'text-[#9A6700]'}>{ratio.toFixed(2)}:1 · {ratio>=4.5?'AA pass':'Check contrast'}</span></div>;
       })}</div>
     </section>
 
