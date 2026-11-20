@@ -478,10 +478,14 @@ export default function AdminDashboard() {
               {data.about.photoUrl&&<img src={data.about.photoUrl} alt="About preview" className="h-48 w-40 rounded-xl border border-[#DCE5EA] bg-[#F1F5F9] object-contain object-bottom"/>}
             </div>
           </Panel>}
-          {view==='timeline'&&<Panel title="Education & career timeline" subtitle="Change the details or reorder milestones. Alternating left/right layout and curved line are preserved.">
+          {view==='timeline'&&<Panel title="Education & career timeline" subtitle="Reorder, duplicate and edit milestones. Changes won't go public until Publish.">
+            <div className="admin-note mb-5 rounded-xl p-3 text-xs">{data.timeline.items.length} milestones · The order below matches the website timeline.</div>
             <div className="space-y-4">
-              {data.timeline.items.map((item,i)=><div key={i} className="rounded-xl border border-[#DCE5EA] bg-[#FFFFFF] p-4">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h3 className="text-sm font-semibold text-[#0F766E]">Milestone {i+1}</h3><Move up={()=>change(d=>{d.timeline.items=move(d.timeline.items,i,i-1);})} down={()=>change(d=>{d.timeline.items=move(d.timeline.items,i,i+1);})} remove={()=>change(d=>{d.timeline.items.splice(i,1);})}/></div>
+              {data.timeline.items.map((item,i)=><div key={i} className="admin-item">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div><h3 className="text-sm font-bold text-teal-700">Milestone {i+1} <span className="font-normal text-slate-500">· {item.year}</span></h3><p className="mt-1 text-xs text-slate-500">{item.title||'Untitled milestone'}</p></div>
+                  <button type="button" className={ui.button+' !px-3 !py-2 !text-xs'} onClick={()=>duplicateTimeline(i)}><Copy size={14}/> Duplicate</button>
+                  <Move up={()=>change(d=>{d.timeline.items=move(d.timeline.items,i,i-1);})} down={()=>change(d=>{d.timeline.items=move(d.timeline.items,i,i+1);})} remove={()=>change(d=>{d.timeline.items.splice(i,1);})}/></div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {(['year','title','organization','type','stat'] as (keyof TimelineEntry)[]).map(k=>
                     <Field key={k} label={k} multiline={k==='stat'} value={item[k]} onChange={v=>change(d=>{d.timeline.items[i][k]=v;})}/>)}
@@ -492,8 +496,11 @@ export default function AdminDashboard() {
           </Panel>}
           {view==='skills'&&<Panel title="Skills & services" subtitle="Edit cards, descriptions and skill items.">
             <Field label="Section introduction" multiline value={data.skills.description} onChange={v=>change(d=>{d.skills.description=v;})}/>
-            <div className="mt-5 space-y-4">{data.skills.services.map((item,i)=><div key={i} className="rounded-xl border border-[#DCE5EA] bg-[#FFFFFF] p-4">
-              <div className="mb-4 flex flex-wrap justify-between gap-3"><h3 className="font-semibold text-[#0F766E]">Service {i+1}</h3><Move up={()=>change(d=>{d.skills.services=move(d.skills.services,i,i-1);})} down={()=>change(d=>{d.skills.services=move(d.skills.services,i,i+1);})} remove={()=>change(d=>{d.skills.services.splice(i,1);})}/></div>
+            <div className="admin-note mt-4 rounded-xl p-3 text-xs">{data.skills.services.length} service cards · {data.skills.stack.reduce((total,g)=>total+g.technologies.length,0)} tools in {data.skills.stack.length} categories.</div>
+            <div className="mt-5 space-y-4">{data.skills.services.map((item,i)=><div key={i} className="admin-item">
+              <div className="mb-4 flex flex-wrap justify-between gap-3"><h3 className="font-semibold text-teal-700">Service {i+1} <span className="text-xs font-normal text-slate-500">· {item.title}</span></h3>
+                <button type="button" className={ui.button+' !px-3 !py-1.5 !text-xs'} onClick={()=>duplicateService(i)}><Copy size={14}/> Duplicate</button>
+                <Move up={()=>change(d=>{d.skills.services=move(d.skills.services,i,i-1);})} down={()=>change(d=>{d.skills.services=move(d.skills.services,i,i+1);})} remove={()=>change(d=>{d.skills.services.splice(i,1);})}/></div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {(['id','title','description'] as (keyof SkillEntry)[]).map(k=><Field key={k} label={k} value={String(item[k])} onChange={v=>change(d=>{(d.skills.services[i] as unknown as Record<string,string>)[k]=v;})}/>)}
               </div>
@@ -502,7 +509,7 @@ export default function AdminDashboard() {
               <button className={ui.button} type="button" onClick={()=>change(d=>{d.skills.services.push({id:String(d.skills.services.length+1).padStart(2,'0'),title:'New service',description:'',items:[]});})}><Plus size={16}/> Add service</button>
             </div>
             <h3 className="mb-4 mt-9 border-t border-[#DCE5EA] pt-7 text-lg font-semibold">Tech stack cards & icons</h3>
-            <div className="space-y-4">{data.skills.stack.map((group,i)=><div key={i} className="rounded-xl border border-[#DCE5EA] bg-[#FFFFFF] p-4">
+            <div className="space-y-4">{data.skills.stack.map((group,i)=><div key={i} className="admin-item">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-semibold text-[#0F766E]">Skill group {i+1}</h4><Move up={()=>change(d=>{d.skills.stack=move(d.skills.stack,i,i-1);})} down={()=>change(d=>{d.skills.stack=move(d.skills.stack,i,i+1);})} remove={()=>change(d=>{d.skills.stack.splice(i,1);})}/></div>
               <div className="grid gap-4 sm:grid-cols-2"><Field label="Group ID" value={group.id} onChange={v=>change(d=>{d.skills.stack[i].id=v;})}/><Field label="Group title" value={group.title} onChange={v=>change(d=>{d.skills.stack[i].title=v;})}/></div>
               <div className="mt-4 space-y-3">{group.technologies.map((item,j)=><div key={j} className="grid gap-2 rounded-lg border border-[#DCE5EA] p-3 sm:grid-cols-[1fr_1fr_auto]"><Field label="Skill name" value={item.name} onChange={v=>change(d=>{d.skills.stack[i].technologies[j].name=v;})}/><Field label="Icon path / URL" value={item.icon} onChange={v=>change(d=>{d.skills.stack[i].technologies[j].icon=v;})}/><button type="button" className={ui.danger} onClick={()=>change(d=>{d.skills.stack[i].technologies.splice(j,1);})}><Trash2 size={16}/></button></div>)}</div>
@@ -510,10 +517,19 @@ export default function AdminDashboard() {
             </div>)}
             <button type="button" className={ui.button} onClick={()=>change(d=>{d.skills.stack.push({id:'tools',title:'MORE TOOLS',technologies:[]});})}><Plus size={15}/> Add skill group</button></div>
           </Panel>}
-          {view==='projects'&&<Panel title="Portfolio projects" subtitle="Create, edit, reorder and remove projects. Screenshot placeholders are left unchanged until you upload real ones.">
-            <div className="mb-5 flex flex-wrap gap-2">{data.projects.items.map((p,i)=><button type="button" key={i} className={ui.button+(activeProject===i?' !bg-[#DCFCE7] !text-[#0F766E]':'')} onClick={()=>setActiveProject(i)}>{p.title.slice(0,34)}</button>)}</div>
+          {view==='projects'&&<Panel title="Portfolio projects" subtitle="Search, duplicate, reorder and edit each case study. Images stay as placeholders until you upload screenshots.">
+            <div className="mb-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+              <label className="relative block"><Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><span className="sr-only">Search projects</span><input className={ui.input+' !pl-10'} placeholder="Search title, role, or tools..." value={projectSearch} onChange={e=>setProjectSearch(e.target.value)}/></label>
+              <span className="admin-chip self-center">{data.projects.items.length} total projects</span>
+            </div>
+            <div className="mb-5 flex flex-wrap gap-2">
+              {matchingProjects.map(p=><button type="button" key={p.id} className={ui.button+(activeProject===p.index?' !border-teal-300 !bg-teal-50 !text-teal-800':'')} onClick={()=>setActiveProject(p.index)}>{p.title.slice(0,34)}</button>)}
+              {matchingProjects.length===0&&<p className="text-sm text-slate-500">No projects match. Try a different search.</p>}
+            </div>
             {project&&<div className="rounded-xl border border-[#DCE5EA] bg-[#FFFFFF] p-4 md:p-5">
-              <div className="mb-4 flex flex-wrap justify-between gap-2"><h3 className="font-semibold text-[#0F766E]">Project #{activeProject+1}</h3>
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                  <div><h3 className="font-bold text-teal-700">Project #{activeProject+1} · {project.title}</h3><p className="mt-1 text-xs text-slate-500">Unique slug: {project.slug}</p></div>
+                  <button type="button" className={ui.button+' !text-xs'} onClick={duplicateProject}><Copy size={14}/> Duplicate project</button>
                 <Move up={()=>{change(d=>{d.projects.items=move(d.projects.items,activeProject,activeProject-1);});setActiveProject(Math.max(0,activeProject-1));}}
                 down={()=>{change(d=>{d.projects.items=move(d.projects.items,activeProject,activeProject+1);});setActiveProject(Math.min(data.projects.items.length-1,activeProject+1));}}
                 remove={()=>{change(d=>{d.projects.items.splice(activeProject,1);});setActiveProject(Math.max(0,activeProject-1));}}/>
@@ -528,7 +544,18 @@ export default function AdminDashboard() {
                   <Lines key={k} label={k} items={(project[k] as string[])||[]}
                     onChange={v=>change(d=>{(d.projects.items[activeProject] as unknown as Record<string,string[]>)[k]=v;})}/>)}
               </div>
-              <button type="button" className={ui.button+' mt-4'} onClick={()=>setPickerTarget('project')}>Add image from Media Library</button>
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                  <button type="button" className={ui.button} onClick={()=>setPickerTarget('project')}><Images size={15}/> Add image from library</button>
+                  <Link target="_blank" href={'/projects/'+project.slug} className={ui.button}><ExternalLink size={15}/> View published project</Link>
+                  {project.github&&<a href={project.github} target="_blank" rel="noopener noreferrer" className={ui.button}><ExternalLink size={15}/> GitHub</a>}
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{project.images.map((url,i)=><div key={url+'-'+i} className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                  <div className="relative h-32"><img alt={project.title+' screenshot '+(i+1)} src={url} className="h-full w-full object-contain"/></div>
+                  <div className="flex items-center justify-between gap-1 p-2">
+                    <button type="button" className="text-xs font-semibold text-teal-700 hover:underline" onClick={()=>change(d=>{d.projects.items[activeProject].hoverImage=url;})}>{project.hoverImage===url?'✓ Cover':'Set cover'}</button>
+                    <button type="button" className="text-xs font-semibold text-rose-600 disabled:opacity-30" disabled={project.images.length<=1} onClick={()=>change(d=>{d.projects.items[activeProject].images.splice(i,1);if(d.projects.items[activeProject].hoverImage===url)d.projects.items[activeProject].hoverImage=d.projects.items[activeProject].images[0];})}>Remove</button>
+                  </div>
+                </div>)}</div>
               <div className="mt-5 space-y-3"><span className={ui.label}>Project statistics</span>
                 {project.stats.map((s,i)=><div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
                   <Field label="Value" value={s.value} onChange={v=>change(d=>{d.projects.items[activeProject].stats[i].value=v;})}/>
