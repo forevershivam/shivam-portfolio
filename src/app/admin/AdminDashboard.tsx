@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import Link from 'next/link';
 import { ArrowDown, ArrowUp, Check, ExternalLink, FileText, ImagePlus, LogOut, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
 import { mergePortfolio, portfolioDefaults, type PortfolioData, type EditableSection, type TimelineEntry, type SkillEntry, type MenuLink } from '@/lib/portfolio-defaults';
 import type { Project } from '@/lib/projects';
@@ -170,14 +171,14 @@ export default function AdminDashboard() {
       </div>
       {loginError&&<p role="alert" className="mt-5 rounded-xl bg-red-950/40 p-3 text-sm text-red-200">{loginError}</p>}
       <button disabled={busy||!email||!password} className="mt-7 w-full rounded-xl bg-[#42D896] px-5 py-3.5 font-bold text-[#092114] transition hover:bg-[#79E7B8] disabled:opacity-50">{busy?'Signing in…':'Sign in securely →'}</button>
-      <a href="/" className="mt-5 block text-center text-xs text-[#94B5A0] hover:text-white">← Back to portfolio</a>
+      <Link href="/" className="mt-5 block text-center text-xs text-[#94B5A0] hover:text-white">← Back to portfolio</Link>
     </form>
   </main>;
   return <main className="min-h-screen bg-[#07140D] font-sans text-[#DDECE2]">
     <div className="flex min-h-screen flex-col lg:flex-row">
       <aside className="w-full border-b border-[#264436] bg-[#0A1B12] lg:sticky lg:top-0 lg:h-screen lg:w-[260px] lg:flex-shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
         <div className="border-b border-[#264436] px-6 py-6">
-          <a href="/" className="text-xl font-black uppercase tracking-[-0.06em] text-white">SHIVAM<span className="text-[#46D99A]">.</span></a>
+          <Link href="/" className="text-xl font-black uppercase tracking-[-0.06em] text-white">SHIVAM<span className="text-[#46D99A]">.</span></Link>
           <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#75A68C]">Portfolio control room</p>
         </div>
         <nav className="flex gap-1 overflow-x-auto p-3 lg:block lg:space-y-5 lg:overflow-visible lg:p-5" aria-label="Admin sections">
