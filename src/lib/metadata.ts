@@ -7,5 +7,5 @@ export const siteMetadata:Metadata={
  authors:[{name:site.name}],creator:site.name,metadataBase:new URL(site.url),
  alternates:{canonical:'./'},icons:{icon:'/icon.svg'},
  openGraph:{title:'Shivam Sharma | Data Analyst',description:site.tagline,url:site.url,siteName:'Shivam Sharma Portfolio',type:'website'},
- robots:{index:!!process.env.NEXT_PUBLIC_SITE_URL,follow:!!process.env.NEXT_PUBLIC_SITE_URL}
+ robots:{index:!!(process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL)),follow:!!(process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL))}
 };

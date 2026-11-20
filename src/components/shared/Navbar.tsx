@@ -6,7 +6,8 @@ import { useTransitionState } from 'next-transition-router';
 import { useLenis } from '@/components/providers/SmoothScrollProvider';
 import AnimatedLink from '@/components/ui/AnimateLink';
 import { useHandleLinkClick } from '@/lib/navigation';
-import { site, socials } from '@/lib/site';
+import { site } from '@/lib/site';
+import { usePortfolio } from '@/components/providers/PortfolioContentProvider';
 import Link from 'next/link';
 import Lenis from 'lenis';
 import { Copyright } from 'lucide-react';
@@ -120,6 +121,7 @@ interface NavbarBrandProps {
 }
 
 const NavbarBrand: React.FC<NavbarBrandProps> = ({ logoRef, handleLinkClick }) => {
+  const { hero } = usePortfolio();
   return (
     <Magnetic strength={0.3}>
       <Link
@@ -130,19 +132,19 @@ const NavbarBrand: React.FC<NavbarBrandProps> = ({ logoRef, handleLinkClick }) =
           handleLinkClick('/#top');
         }}
         className="group flex items-center cursor-pointer select-none py-1 text-warm"
-        aria-label="Shivam Sharma Home"
+        aria-label={`${hero.firstName} ${hero.lastName} Home`}
       >
         <div className="transition-transform duration-500 ease-in-expo group-hover:rotate-[360deg] flex items-center justify-center">
           <Copyright className="w-[18px] h-[18px]" />
         </div>
         <div className="relative ms-2 flex items-center whitespace-nowrap text-warm text-lg font-sans tracking-wide font-medium leading-none">
-          <span>shivam</span>
+          <span>{hero.firstName.toLowerCase()}</span>
           <span className="relative inline-flex items-center overflow-hidden transition-all duration-500 ease-in-expo w-[32px] group-hover:w-[86px]">
             <span className="transition-transform duration-500 ease-in-expo group-hover:-translate-x-full inline-block">
-              dev
+              data
             </span>
             <span className="absolute left-0 ps-1.5 transition-transform duration-500 ease-in-expo translate-x-full group-hover:translate-x-0 inline-block">
-              sharma
+              {hero.lastName.toLowerCase()}
             </span>
           </span>
         </div>
@@ -165,6 +167,8 @@ interface FullscreenMenuProps {
 }
 
 const FullscreenMenu: React.FC<FullscreenMenuProps> = ({ isOpen, onClose, handleLinkClick, links }) => {
+  const { socials } = usePortfolio();
+  const socialItems = [{ label: 'GitHub', href: socials.github }, { label: 'LinkedIn', href: socials.linkedin }, { label: 'Instagram', href: socials.instagram }];
   const containerRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -459,7 +463,7 @@ const FullscreenMenu: React.FC<FullscreenMenuProps> = ({ isOpen, onClose, handle
             </div>
 
             <div className="flex gap-4 md:gap-6 justify-start flex-wrap">
-              {[socials.github, socials.linkedin, socials.instagram].map((s) => (
+              {socialItems.map((s) => (
                 <Magnetic key={s.label} strength={0.3}>
                   <a
                     href={s.href}
@@ -487,6 +491,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ hamburgerOnly = false }) => {
+  const { navigation } = usePortfolio();
   const navRef = useRef<HTMLDivElement>(null);
   const mobileNavRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLDivElement>(null);
@@ -657,13 +662,7 @@ const Navbar: React.FC<NavbarProps> = ({ hamburgerOnly = false }) => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const handleLinkClick = useHandleLinkClick(setIsMenuOpen);
 
-  const links = [
-    { name: 'Home', href: '/#top', menuOnly: true },
-    { name: 'About', href: '/#about' },
-    { name: 'Skills', href: '/#tech-stack' },
-    { name: 'Projects', href: '/#projects' },
-    { name: 'Contact', href: '/#contact' },
-  ];
+  const links = navigation.links;
 
   const navStyle: React.CSSProperties = {
     opacity: isTransitioning ? 0 : 1,

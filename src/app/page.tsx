@@ -1,11 +1,8 @@
 /**
- * @license
- * Copyright (c) 2026 Aitezaz Sikandar. All rights reserved.
- * Licensed under the MIT License. See LICENSE in the project root for license information.
- * Project: Portfolio
- * Author: Aitezaz Sikandar (aitezazdev)
- * Website: https://aitezazdev.vercel.app
+ * SPDX-License-Identifier: MIT
+ * See LICENSE for original and additional copyright notices.
  */
+
 
 import HomeBanner from '@/components/sections/HomeBanner';
 import Projects from '@/components/sections/Projects';
@@ -15,10 +12,20 @@ import Contact from '@/components/sections/Contact';
 import Footer from '@/components/shared/Footer';
 import Navbar from '@/components/shared/Navbar';
 import HomeScrollOrchestrator from '@/components/home/HomeScrollOrchestrator';
+import { PortfolioContentProvider } from '@/components/providers/PortfolioContentProvider';
+import { getPublicPortfolio } from '@/lib/portfolio-supabase';
+import { siteMetadata } from '@/lib/metadata';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+export async function generateMetadata() {
+  const { seo } = await getPublicPortfolio();
+  return { ...siteMetadata, title: seo.title, description: seo.description };
+}
+
+export default async function Home() {
+  const content = await getPublicPortfolio();
   return (
-    <>
+    <PortfolioContentProvider value={content}>
       <Navbar />
       <HomeScrollOrchestrator
         banner={<HomeBanner />}
@@ -34,6 +41,6 @@ export default function Home() {
           <Footer />
         </div>
       </HomeScrollOrchestrator>
-    </>
+    </PortfolioContentProvider>
   );
 }

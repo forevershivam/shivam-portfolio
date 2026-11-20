@@ -1,13 +1,16 @@
 import ProjectDetails from '@/components/project/ProjectDetails';
-import { getProjectBySlug, getAllProjects } from '@/lib/projects';
+import { getAllProjects } from '@/lib/projects';
+import { getPublicPortfolio } from '@/lib/portfolio-supabase';
 import { notFound } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const { projects } = await getPublicPortfolio();
+  const project = projects.items.find(p => p.slug === slug);
   if (!project) {
     return {
       title: 'Project Not Found',
@@ -45,7 +48,8 @@ export async function generateStaticParams() {
 }
 export default async function ProjectPage({ params }: PageProps) {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const { projects } = await getPublicPortfolio();
+  const project = projects.items.find(p => p.slug === slug);
   if (!project) notFound();
-  return <ProjectDetails key={project.slug} project={project} />;
+  return <ProjectDetails key={project.slug} project={project} projects={projects.items} />;
 }

@@ -5,6 +5,7 @@ import SmoothScrollProvider from '@/components/providers/SmoothScrollProvider';
 import GlobalPreloader from '@/components/shared/GlobalPreloader';
 import CustomCursor from '@/components/shared/CustomCursor';
 import Providers from './providers';
+import { usePathname } from 'next/navigation';
 
 declare global {
   interface Window {
@@ -13,6 +14,7 @@ declare global {
 }
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
   const [showCursor, setShowCursor] = useState(false);
 
@@ -23,6 +25,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     setShowCursor(true);
     window.dispatchEvent(new CustomEvent('preloaderComplete'));
   }, []);
+
+  if (pathname?.startsWith('/admin')) return <>{children}</>;
 
   return (
     <>

@@ -6,7 +6,8 @@ import { Link } from 'next-transition-router';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useRouter } from 'next/navigation';
 import AnimatedHeading from '@/components/ui/AnimateHeading';
-import { getAllProjects, Project } from '@/lib/projects';
+import { Project } from '@/lib/projects';
+import { usePortfolio } from '@/components/providers/PortfolioContentProvider';
 
 const useHoverPreview = (containerRef?: React.RefObject<HTMLDivElement | null>) => {
   const floatingRef = useRef<HTMLDivElement | null>(null);
@@ -324,6 +325,7 @@ function MobileSnapProjects({ projects, router }: MobileSnapProjectsProps) {
               >
                 <Image
                   src={project.hoverImage || project.images[0]}
+                  unoptimized={(project.hoverImage || project.images[0] || '').startsWith('https://')}
                   alt={project.title}
                   fill
                   sizes="(max-width: 767px) calc(100vw - 32px)"
@@ -402,7 +404,7 @@ function MobileSnapProjects({ projects, router }: MobileSnapProjectsProps) {
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const projects = getAllProjects();
+  const projects = usePortfolio().projects.items;
   const containerRef = useRef<HTMLDivElement>(null);
   const sliderReelRef = useRef<HTMLDivElement>(null);
   const activeIndexRef = useRef<number>(-1);
@@ -694,6 +696,7 @@ export default function ProjectsPage() {
                     >
                       <Image
                         src={imgUrl}
+                        unoptimized={imgUrl.startsWith('https://')}
                         alt={project.title}
                         fill
                         sizes="480px"

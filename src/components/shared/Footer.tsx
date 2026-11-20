@@ -6,10 +6,13 @@ import Magnetic from '@/components/ui/Magnetic';
 import { FaArrowUp } from 'react-icons/fa';
 import { useHandleLinkClick } from '@/lib/navigation';
 import { useLenis } from '@/components/providers/SmoothScrollProvider';
-import { site, socialList, navLinks } from '@/lib/site';
+import { site } from '@/lib/site';
+import { usePortfolio } from '@/components/providers/PortfolioContentProvider';
 import Lenis from 'lenis';
 
 const Footer = () => {
+  const { navigation, socials } = usePortfolio();
+  const socialList = [{label:'LinkedIn',href:socials.linkedin},{label:'GitHub',href:socials.github},{label:'Instagram',href:socials.instagram}];
   const [currentTime, setCurrentTime] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const footerRef = useRef<HTMLElement>(null);
@@ -49,7 +52,7 @@ const Footer = () => {
   }, []);
 
   const handleLinkClick = useHandleLinkClick();
-  const links = navLinks.filter((l) => !('menuOnly' in l && l.menuOnly));
+  const links = navigation.links.filter((l) => !l.menuOnly);
 
   const scrollToTop = () => {
     if (lenis) {

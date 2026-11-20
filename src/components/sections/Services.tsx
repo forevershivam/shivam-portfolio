@@ -4,8 +4,10 @@ import { useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import AnimatedHeading from '@/components/ui/AnimateHeading';
 import ScrollWordReveal from '@/components/ui/ScrollWordReveal';
+import { usePortfolio } from '@/components/providers/PortfolioContentProvider';
 
 const Services = () => {
+  const { skills } = usePortfolio();
   const sectionRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -33,14 +35,8 @@ const Services = () => {
     { t: 'i', serif: true },
     { t: 'DO' },
   ];
-  const descriptionText =
-    "I analyze data with Excel and SQL, prepare MIS reports and am developing Power BI skills to communicate business performance.";
-
-  const services = [
- {id:'01',title:'Data Cleaning & Analysis',description:'Cleaning, validating and transforming raw data into useful insights.',items:['Excel','SQL','Power Query','PivotTables']},
- {id:'02',title:'MIS & KPI Reporting',description:'Developing clear performance reports and business metrics.',items:['MIS Reporting','Sales Analysis','KPI Monitoring']},
- {id:'03',title:'Dashboards & Visualization',description:'Building easy-to-explore dashboards, charts and data summaries.',items:['Excel Dashboards','Data Visualization','Power BI (in progress)']},
-  ];
+  const descriptionText = skills.description;
+  const services = skills.services;
 
   return (
     <section

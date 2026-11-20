@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { gsap, useGSAP } from '@/lib/gsap';
 import AnimatedHeading from '@/components/ui/AnimateHeading';
 import ScrollWordReveal from '@/components/ui/ScrollWordReveal';
+import { usePortfolio } from '@/components/providers/PortfolioContentProvider';
 
 export interface TechItem {
   name: string;
@@ -29,6 +30,7 @@ export const STACK_SECTIONS:StackCategory[]=[
 ];
 
 const TechStack = () => {
+  const sections = usePortfolio().skills.stack;
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -44,15 +46,13 @@ const TechStack = () => {
 
   const filterOptions = [
     { id: 'all', label: 'All Skills' },
-    { id: 'frontend', label: 'Core Tools' },
-    { id: 'backend', label: 'Analysis' },
-    { id: 'database', label: 'Reporting' },
+    ...sections.map(s => ({ id:s.id, label: s.title })),
   ];
 
   const visibleSections =
     activeFilter === 'all'
-      ? STACK_SECTIONS
-      : STACK_SECTIONS.filter((sec) => sec.id === activeFilter);
+      ? sections
+      : sections.filter((sec) => sec.id === activeFilter);
 
   useGSAP(
     () => {
@@ -210,6 +210,7 @@ const TechStack = () => {
                     <div className="w-10 h-10 flex items-center justify-center relative flex-shrink-0">
                       <Image
                         src={tech.icon}
+                        unoptimized={tech.icon.startsWith('https://')}
                         alt={tech.name}
                         width={40}
                         height={40}

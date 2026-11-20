@@ -4,24 +4,16 @@ import React, { useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { gsap, SplitText, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import AnimatedButton from '@/components/ui/AnimatedButton';
-import MarqueeStrip from '@/components/sections/MarqueeStrip';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-import { site } from '@/lib/site';
+import { usePortfolio } from '@/components/providers/PortfolioContentProvider';
 
 const FlowField = dynamic(() => import('@/components/canvas/FlowField'), { ssr: false });
 
-const jobRoles = [
-  'Back Office Executive',
-  'MIS Executive',
-  'Associate Analyst',
-  'Data Entry',
-] as const;
-
 export default function HomeBanner() {
+  const { hero } = usePortfolio();
   const sectionRef = useRef<HTMLElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const statusRef = useRef<HTMLDivElement>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const rolesRef = useRef<HTMLUListElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
@@ -43,7 +35,6 @@ export default function HomeBanner() {
     });
 
     const otherElements = [
-      statusRef.current,
       descriptionRef.current,
       rolesRef.current,
       buttonsRef.current,
@@ -136,17 +127,9 @@ export default function HomeBanner() {
       />
 
       <div ref={innerRef} className="relative z-10 mx-auto w-full max-w-6xl">
-        <div
-          ref={statusRef}
-          className="mb-8 inline-flex items-center gap-3 rounded-full border border-[#ADCBB9] bg-white/65 px-4 py-2 font-mono text-xs text-[#147953] sm:text-sm"
-        >
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#34D399]" aria-hidden="true" />
-          Open to entry-level roles
-        </div>
-
         <h1
           ref={headingRef}
-          aria-label={site.name}
+          aria-label={`${hero.firstName} ${hero.lastName}`}
           className="mb-7 flex flex-wrap items-baseline gap-x-3 gap-y-0 leading-[0.95] sm:gap-x-6 md:mb-8"
         >
           <span
@@ -154,14 +137,14 @@ export default function HomeBanner() {
             data-hero-line
             className="inline-block font-display text-[clamp(3.5rem,8.25vw,8.2rem)] font-black uppercase tracking-[-0.075em]"
           >
-            SHIVAM
+            {hero.firstName.toUpperCase()}
           </span>
           <em
             aria-hidden="true"
             data-hero-line
             className="inline-block font-serif text-[clamp(4.2rem,8.55vw,8.6rem)] font-normal italic normal-case tracking-[-0.06em] text-[#34D399]"
           >
-            Sharma
+            {hero.lastName}
           </em>
         </h1>
 
@@ -169,10 +152,9 @@ export default function HomeBanner() {
           ref={descriptionRef}
           className="mb-7 max-w-[680px] font-sans text-base leading-relaxed text-[#45524B] sm:text-lg md:text-xl"
         >
-          Fresher Data Analyst who cleans messy records, writes SQL and creates clear Excel dashboards
-          and MIS reports. Currently learning Power BI.
+          {hero.description}
           <span className="mt-2 block">
-            <strong className="font-semibold text-[#0A0F0D]">47 WPM typing speed · 98% accuracy</strong>
+            <strong className="font-semibold text-[#0A0F0D]">{hero.typing}</strong>
             <span className="text-[#596C61]"> (1-minute test)</span>
           </span>
         </p>
@@ -182,7 +164,7 @@ export default function HomeBanner() {
           aria-label="Entry-level roles I am interested in"
           className="mb-8 flex flex-wrap gap-2 sm:gap-2.5"
         >
-          {jobRoles.map((role) => (
+          {hero.roles.map((role) => (
             <li
               key={role}
               className="rounded-full border border-[#BAC8C0] bg-white/75 px-4 py-2 text-xs font-semibold text-[#24372C] transition-colors duration-300 hover:border-[#078456]/70 hover:text-[#078456] sm:text-sm"
@@ -210,9 +192,6 @@ export default function HomeBanner() {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-20">
-        <MarqueeStrip />
-      </div>
     </section>
   );
 }

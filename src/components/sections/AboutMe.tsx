@@ -5,75 +5,17 @@ import { gsap, useGSAP } from '@/lib/gsap';
 import ScrollWordReveal from '@/components/ui/ScrollWordReveal';
 import AnimatedHeading from '@/components/ui/AnimateHeading';
 import FlowField from '@/components/canvas/FlowField';
-
-const CREDENTIALS = [
-  {
-    year: 'MAR 2023',
-    title: 'Completed Class 12th',
-    organization: 'Higher Secondary Education',
-    stat: 'Completed Class 12 and began preparing for medical entrance exams.',
-    type: 'Education',
-  },
-  {
-    year: '2023–2024',
-    title: 'First NEET Drop',
-    organization: 'NEET Preparation',
-    stat: 'Dedicated the year to NEET preparation; did not secure selection.',
-    type: 'Preparation',
-  },
-  {
-    year: '2024–2025',
-    title: 'Second NEET Drop + IPU CET',
-    organization: 'NEET & IPU CET (Paramedical)',
-    stat: 'Continued NEET preparation and appeared for IPU CET Paramedical.',
-    type: 'Preparation',
-  },
-  {
-    year: 'MAY 2025',
-    title: 'IPU CET — Rank 552',
-    organization: 'IPU CET (Paramedical)',
-    stat: 'Secured rank 552. Chose not to participate in counselling.',
-    type: 'Achievement',
-  },
-  {
-    year: 'JUN 2025',
-    title: 'B.Sc. Life Sciences',
-    organization: 'Indira Gandhi National Open University',
-    stat: 'Joined B.Sc. Life Sciences (Botany, Zoology and Chemistry) while continuing NEET preparation.',
-    type: 'Education',
-  },
-  {
-    year: 'JAN 2026',
-    title: 'Concluded NEET Preparation',
-    organization: 'Career Turning Point',
-    stat: 'Decided to move beyond medical entrance preparation and reconsider my career direction.',
-    type: 'Transition',
-  },
-  {
-    year: 'AUG 2026',
-    title: 'Switched My Career to Data Analytics',
-    organization: 'A New Professional Direction',
-    stat: 'Began building practical skills in Excel, SQL, MIS Reporting and business analysis.',
-    type: 'Career Switch',
-  },
-  {
-    year: '2026–PRESENT',
-    title: 'The Journey Continues...',
-    organization: 'Learning • Building • Growing',
-    stat: 'Developing my Data Analytics, MIS Reporting and Business Intelligence skills while exploring entry-level opportunities.',
-    type: 'Current Chapter',
-  },
-];
+import { usePortfolio } from '@/components/providers/PortfolioContentProvider';
 
 const About = () => {
+  const { about, timeline } = usePortfolio();
   const headingWords = [
     { t: 'WHO' },
     { t: 'am', serif: true },
     { t: 'i?' },
   ];
-  const descriptionText =
-    'I am a B.Sc. Life Sciences student developing practical Data Analytics, Excel, SQL and Business Intelligence skills.';
-  const aboutMeText = `I study Botany, Zoology and Chemistry at IGNOU while building hands-on Data Analytics skills.\n\nMy projects include an Excel dashboard covering 52,351 sales records and a 138,000-order retail analytics project using Excel and MySQL.\n\nI focus on data quality, trustworthy metrics and clear business reports. Power BI is in progress.`;
+  const descriptionText = about.intro;
+  const aboutMeText = about.body;
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -265,6 +207,7 @@ const About = () => {
             <div className="col-span-12 md:col-span-5 lg:col-span-5 flex items-center justify-center">
               <div className="about-image-wrapper relative group w-full max-w-[350px] md:max-w-[380px] h-[360px] md:h-[480px] bg-elevated-dark rounded-2xl overflow-hidden border border-border-subtler shadow-2xl">
                 <FlowField />
+                {about.photoUrl && <img src={about.photoUrl} alt="Shivam Sharma professional portrait" className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] mx-auto h-[96%] w-full object-contain object-bottom" loading="lazy" />}
               </div>
             </div>
 
@@ -309,7 +252,7 @@ const About = () => {
                 />
               </svg>
               <div className="flex flex-col gap-12 md:gap-20">
-                {CREDENTIALS.map((item, idx) => {
+                {timeline.items.map((item, idx) => {
                   const isLeft = idx % 2 === 0;
                   return (
                     <article key={item.title} data-side={isLeft ? 'left' : 'right'} className="cred-row relative grid grid-cols-[32px_1fr] gap-x-5 opacity-0 md:grid-cols-[1fr_96px_1fr] md:gap-x-0">

@@ -1,11 +1,8 @@
 /**
- * @license
- * Copyright (c) 2026 Aitezaz Sikandar. All rights reserved.
- * Licensed under the MIT License. See LICENSE in the project root for license information.
- * Project: Portfolio
- * Author: Aitezaz Sikandar (aitezazdev)
- * Website: https://aitezazdev.vercel.app
+ * SPDX-License-Identifier: MIT
+ * See LICENSE for original and additional copyright notices.
  */
+
 
 import { Geist, Geist_Mono, Space_Grotesk, Instrument_Serif } from 'next/font/google';
 import './globals.css';

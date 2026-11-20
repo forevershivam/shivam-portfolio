@@ -1,0 +1,363 @@
+'use client';
+
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { ArrowDown, ArrowUp, Check, ExternalLink, FileText, ImagePlus, LogOut, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
+import { mergePortfolio, portfolioDefaults, type PortfolioData, type EditableSection, type TimelineEntry, type SkillEntry, type MenuLink } from '@/lib/portfolio-defaults';
+import type { Project } from '@/lib/projects';
+
+type View = EditableSection | 'overview' | 'media' | 'resume' | 'inbox' | 'downloads';
+type Message = { id:string;sender_name:string;sender_email:string;message:string;status:string;created_at:string };
+type DownloadRecord = { id:string;visitor_name:string;company_name:string;contact_email:string|null;contact_phone:string|null;downloaded_at:string };
+type ResumeRecord = { id:string;display_name:string;is_active:boolean;created_at:string };
+const groups: {heading:string;items:{key:View;label:string}[]}[] = [
+  { heading:'Workspace',items:[{key:'overview',label:'Overview'}, {key:'inbox',label:'Contact inbox'}, {key:'downloads',label:'CV activity'}]},
+  { heading:'Site editor',items:[{key:'hero',label:'Homepage'}, {key:'about',label:'About me'}, {key:'timeline',label:'Timeline'}, {key:'skills',label:'Skills & services'}, {key:'projects',label:'Projects'}, {key:'navigation',label:'Navigation'}, {key:'socials',label:'Social links'}, {key:'seo',label:'SEO'}, {key:'theme',label:'Theme'}]},
+  { heading:'Files',items:[{key:'media',label:'Photo & media'}, {key:'resume',label:'Resume manager'}]},
+];
+const editable: EditableSection[]=['hero','about','timeline','skills','projects','navigation','socials','seo','theme'];
+const ui={
+  label:'mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91AC9D]',
+  input:'w-full rounded-xl border border-[#254234] bg-[#102219] px-4 py-3 text-[14px] text-[#E8F5ED] outline-none transition focus:border-[#39D998] focus:ring-2 focus:ring-[#39D998]/15',
+  card:'rounded-2xl border border-[#254334] bg-[#0E1D16] p-5 md:p-6',
+  button:'inline-flex items-center justify-center gap-2 rounded-xl border border-[#31523F] bg-[#162A1E] px-4 py-2.5 text-sm font-semibold text-[#D4F4E0] transition hover:bg-[#1D3829] disabled:opacity-50',
+  danger:'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium text-[#FFAAA2] hover:bg-[#50251E]/40',
+};
+function Field({label,value,onChange,multiline=false,placeholder='',type='text'}:{
+  label:string;value:string;onChange:(v:string)=>void;multiline?:boolean;placeholder?:string;type?:string
+}){
+  return <label className="block"><span className={ui.label}>{label}</span>{multiline?
+    <textarea rows={4} className={ui.input+' min-h-[100px] resize-y'} placeholder={placeholder} value={value} onChange={e=>onChange(e.target.value)} />:
+    <input className={ui.input} type={type} placeholder={placeholder} value={value} onChange={e=>onChange(e.target.value)}/>}</label>;
+}
+function Lines({label,items,onChange}:{label:string;items:string[];onChange:(v:string[])=>void}){
+  return <Field label={label+' (one per line)'} multiline value={items.join('\n')} onChange={v=>onChange(v.split('\n').map(s=>s.trim()).filter(Boolean))}/>;
+}
+function Panel({title,subtitle,children}:{title:string;subtitle?:string;children:ReactNode}){
+  return <section className={ui.card}><div className="mb-5"><h2 className="text-xl font-semibold text-white">{title}</h2>{subtitle&&<p className="mt-2 text-sm leading-6 text-[#9CB6A7]">{subtitle}</p>}</div>{children}</section>;
+}
+function Move({up,down,remove}:{up:()=>void;down:()=>void;remove:()=>void}){
+  return <div className="flex items-center gap-1.5">
+    <button type="button" className={ui.button+' !px-2.5'} title="Move up" onClick={up}><ArrowUp size={14}/></button>
+    <button type="button" className={ui.button+' !px-2.5'} title="Move down" onClick={down}><ArrowDown size={14}/></button>
+    <button type="button" className={ui.danger} onClick={remove}><Trash2 size={14}/> Remove</button>
+  </div>;
+}
+const makeProject=():Project=>({
+  id:Date.now(),slug:'new-project',title:'New Project',type:'Analytics',role:'Personal Analytics Project',
+  tech:[],description:'',overview:'',architecture:'',implementation:'',stats:[],accent:'#34D399',
+  myRole:[],images:['/Projects/excel-sales.svg'],hoverImage:'/Projects/excel-sales.svg',github:'',liveUrl:'',
+});
+
+export default function AdminDashboard() {
+  const [session,setSession]=useState<'checking'|'guest'|'admin'>('checking');
+  const [email,setEmail]=useState('');
+  const [password,setPassword]=useState('');
+  const [loginError,setLoginError]=useState('');
+  const [view,setView]=useState<View>('overview');
+  const [data,setData]=useState<PortfolioData>(portfolioDefaults);
+  const [messages,setMessages]=useState<Message[]>([]);
+  const [downloads,setDownloads]=useState<DownloadRecord[]>([]);
+  const [resumes,setResumes]=useState<ResumeRecord[]>([]);
+  const [busy,setBusy]=useState(false);
+  const [notice,setNotice]=useState('');
+  const [fail,setFail]=useState('');
+  const [file,setFile]=useState<File|null>(null);
+  const [uploadKind,setUploadKind]=useState<'photo'|'project'|'resume'>('photo');
+  const [recentImage,setRecentImage]=useState('');
+  const [activeProject,setActiveProject]=useState(0);
+
+  const change=(f:(draft:PortfolioData)=>void)=>{
+    setData(prev=>{const next=structuredClone(prev);f(next);return next;});
+    setNotice('');
+  };
+  const move=<T,>(items:T[],index:number,to:number)=>{
+    if(to<0||to>=items.length)return items;
+    const result=[...items];[result[index],result[to]]=[result[to],result[index]];return result;
+  };
+  const request=async(path:string,init?:RequestInit)=>{
+    const res=await fetch(path,{...init,credentials:'same-origin',cache:'no-store'});
+    const json=await res.json().catch(()=>({}));
+    if(!res.ok)throw Error(json.error||'Request failed');
+    return json;
+  };
+  const load=async()=>{
+    const [content,records]=await Promise.all([
+      request('/api/admin/sections'),
+      request('/api/admin/records'),
+    ]);
+    const overrides: Record<string,object>={};
+    for (const row of content.sections||[]) overrides[row.section_key]=row.content;
+    setData(mergePortfolio(overrides as Partial<PortfolioData>));
+    setMessages(records.messages||[]);
+    setDownloads(records.downloads||[]);
+    setResumes(records.resumes||[]);
+  };
+  useEffect(()=>{
+    let active=true;
+    (async()=>{
+      try{
+        const s=await request('/api/admin/auth');
+        if(!active)return;
+        if(s.authenticated){
+          setEmail(s.email||'');setSession('admin');
+          try{await load();}catch(e){if(active)setFail(e instanceof Error?e.message:'Could not load dashboard');}
+        }else setSession('guest');
+      }catch{if(active)setSession('guest');}
+    })();
+    return ()=>{active=false;};
+    // Only check the session once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+  const login=async(e:FormEvent)=>{
+    e.preventDefault();setBusy(true);setLoginError('');
+    try{
+      const r=await request('/api/admin/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+      setEmail(r.email||email);setPassword('');setSession('admin');await load();
+    }catch(e){setLoginError(e instanceof Error?e.message:'Login failed');}
+    finally{setBusy(false);}
+  };
+  const logout=async()=>{
+    setBusy(true);
+    try{await request('/api/admin/auth',{method:'DELETE'});}finally{setSession('guest');setEmail('');setPassword('');setData(portfolioDefaults);setBusy(false);}
+  };
+  const save=async()=>{
+    if(!editable.includes(view as EditableSection))return;
+    setBusy(true);setNotice('');setFail('');
+    try{
+      await request('/api/admin/sections',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:view,content:data[view as EditableSection]})});
+      setNotice('Saved! Once this code is deployed, updated content appears on the website after refresh.');
+    }catch(e){setFail(e instanceof Error?e.message:'Unable to save');}
+    finally{setBusy(false);}
+  };
+  const upload=async(e:FormEvent)=>{
+    e.preventDefault();if(!file)return;
+    setBusy(true);setNotice('');setFail('');
+    try{
+      const fd=new FormData();fd.set('kind',uploadKind);fd.set('file',file);
+      const r=await request('/api/admin/upload',{method:'POST',body:fd});
+      setFile(null);
+      const form=document.getElementById('admin-file-input') as HTMLInputElement|null;
+      if(form)form.value='';
+      if(uploadKind==='resume'){setNotice('Resume privately uploaded. Public download is still disabled until the gated download flow is built.');await load();}
+      else{
+        setRecentImage(r.url);
+        if(uploadKind==='photo')change(d=>{d.about.photoUrl=r.url;});
+        setNotice(uploadKind==='photo'?'Portrait uploaded. Open About me and click Save to publish its URL.':'Image uploaded. Copy its URL into a project image field and Save Projects.');
+      }
+    }catch(e){setFail(e instanceof Error?e.message:'Upload failed');}
+    finally{setBusy(false);}
+  };
+  const changeMessage=async(id:string,status:string)=>{
+    setBusy(true);setFail('');
+    try{
+      await request('/api/admin/records',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});
+      setMessages(prev=>prev.map(m=>m.id===id?{...m,status}:m));
+    }catch(e){setFail(e instanceof Error?e.message:'Update failed');}
+    finally{setBusy(false);}
+  };
+  const project=data.projects.items[activeProject];
+
+  if(session==='checking') return <main className="flex min-h-screen items-center justify-center bg-[#08140E] text-[#A6DCC0]">Verifying admin session…</main>;
+  if(session==='guest')return <main className="flex min-h-screen items-center justify-center bg-[#08140E] p-5 text-[#E4F3E9]">
+    <div className="absolute left-6 top-6 text-sm font-black uppercase tracking-widest text-[#54DA98]">SHIVAM / ADMIN</div>
+    <form onSubmit={login} className="w-full max-w-md rounded-3xl border border-[#294A35] bg-[#0F2118] p-7 shadow-2xl sm:p-10">
+      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#153E29] text-[#4EDEA0]"><ShieldCheck size={29}/></div>
+      <h1 className="text-3xl font-black tracking-tight">Welcome back.</h1>
+      <p className="mt-2 mb-8 text-sm leading-6 text-[#9FB9A8]">Sign in with your authorized Supabase admin account. The portfolio remains public; editing is private.</p>
+      <div className="space-y-5">
+        <Field label="Admin email" value={email} onChange={setEmail} type="email" placeholder="you@example.com"/>
+        <label className="block"><span className={ui.label}>Password</span><input className={ui.input} value={password} onChange={e=>setPassword(e.target.value)} type="password" autoComplete="current-password" required minLength={6}/></label>
+      </div>
+      {loginError&&<p role="alert" className="mt-5 rounded-xl bg-red-950/40 p-3 text-sm text-red-200">{loginError}</p>}
+      <button disabled={busy||!email||!password} className="mt-7 w-full rounded-xl bg-[#42D896] px-5 py-3.5 font-bold text-[#092114] transition hover:bg-[#79E7B8] disabled:opacity-50">{busy?'Signing in…':'Sign in securely →'}</button>
+      <a href="/" className="mt-5 block text-center text-xs text-[#94B5A0] hover:text-white">← Back to portfolio</a>
+    </form>
+  </main>;
+  return <main className="min-h-screen bg-[#07140D] font-sans text-[#DDECE2]">
+    <div className="flex min-h-screen flex-col lg:flex-row">
+      <aside className="w-full border-b border-[#264436] bg-[#0A1B12] lg:sticky lg:top-0 lg:h-screen lg:w-[260px] lg:flex-shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+        <div className="border-b border-[#264436] px-6 py-6">
+          <a href="/" className="text-xl font-black uppercase tracking-[-0.06em] text-white">SHIVAM<span className="text-[#46D99A]">.</span></a>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#75A68C]">Portfolio control room</p>
+        </div>
+        <nav className="flex gap-1 overflow-x-auto p-3 lg:block lg:space-y-5 lg:overflow-visible lg:p-5" aria-label="Admin sections">
+          {groups.map(group=><div key={group.heading} className="flex shrink-0 gap-1 lg:block">
+            <span className="hidden px-3 text-[10px] uppercase tracking-[0.2em] text-[#688C76] lg:mb-2 lg:block">{group.heading}</span>
+            {group.items.map(item=><button key={item.key} type="button" onClick={()=>{setView(item.key);setNotice('');setFail('');}}
+              className={'whitespace-nowrap rounded-xl px-4 py-2.5 text-left text-xs font-semibold transition lg:my-0.5 lg:block lg:w-full lg:text-sm '+(view===item.key?'bg-[#1E4830] text-[#69F4B4]':'text-[#A7C2B0] hover:bg-[#152A1E] hover:text-white')}>
+              {item.label}
+            </button>)}
+          </div>)}
+        </nav>
+        <div className="hidden border-t border-[#264436] px-5 py-5 lg:block">
+          <p className="truncate text-xs text-[#B8CCBF]" title={email}>{email}</p>
+          <button type="button" onClick={logout} className="mt-3 flex items-center gap-2 text-xs text-[#A6C5B1] hover:text-white"><LogOut size={14}/> Sign out</button>
+        </div>
+      </aside>
+
+      <div className="min-w-0 flex-1">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#244234] bg-[#091910] px-5 py-5 md:px-9">
+          <div><div className="text-[11px] uppercase tracking-[0.18em] text-[#729B7E]">Admin / {view}</div><h1 className="mt-1 text-xl font-bold capitalize text-white sm:text-2xl">{view.replace(/-/g,' ')}</h1></div>
+          <div className="flex flex-wrap items-center gap-2">
+            <a href="/" target="_blank" rel="noopener noreferrer" className={ui.button}><ExternalLink size={15}/> View website</a>
+            {editable.includes(view as EditableSection)&&<button type="button" onClick={save} disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-[#38D992] px-5 py-2.5 text-sm font-extrabold text-[#092015] transition hover:bg-[#7BE9B6] disabled:opacity-50"><Save size={16}/>{busy?'Saving…':'Save changes'}</button>}
+            <button type="button" onClick={logout} className={ui.button+' lg:hidden'}><LogOut size={15}/></button>
+          </div>
+        </header>
+
+        <div className="mx-auto max-w-6xl space-y-5 px-4 py-7 sm:px-6 md:px-9 md:py-10">
+          {notice&&<div role="status" className="flex items-start gap-2 rounded-xl border border-[#23603D] bg-[#123B25] px-4 py-3 text-sm text-[#A8FFD0]"><Check size={18} className="mt-0.5 shrink-0"/>{notice}</div>}
+          {fail&&<div role="alert" className="rounded-xl border border-[#78413A] bg-[#3D1B1D] px-4 py-3 text-sm text-[#FFD0C8]">{fail}</div>}
+          {view==='overview'&&<>
+            <Panel title="Portfolio workspace" subtitle="Manage your content here. All edits stay private until saved, and no GitHub push is performed by the dashboard.">
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[['Editable sections','9'],['Contact messages',String(messages.length)],['Tracked CV downloads',String(downloads.length)]].map(([k,v])=>
+                  <div key={k} className="rounded-xl border border-[#2A4936] bg-[#10281A] p-5"><p className="text-xs text-[#A7BCAA]">{k}</p><p className="mt-3 text-4xl font-black text-[#5BE2A0]">{v}</p></div>)}
+              </div>
+            </Panel>
+            <Panel title="What is ready?" subtitle="Supabase-secured editing, media storage, saved content and admin-only records are available in this build.">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl bg-[#102A1B] p-4"><b className="text-[#84EBB2]">✓ CMS editor</b><p className="mt-2 text-sm text-[#B0C5B6]">Hero, About, Timeline, Skills, Projects, Navigation, Socials, SEO and accent colour.</p></div>
+                <div className="rounded-xl bg-[#2D2519] p-4"><b className="text-[#FFE2A0]">⏸ Email workflows paused</b><p className="mt-2 text-sm text-[#D1C1A6]">Contact notifications and gated CV download delivery are intentionally scheduled for later.</p></div>
+              </div>
+            </Panel>
+          </>}
+          {view==='hero'&&<Panel title="Homepage hero" subtitle="Edit your name, introduction and job-role chips. Existing FlowField animation is preserved.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="First name" value={data.hero.firstName} onChange={v=>change(d=>{d.hero.firstName=v;})}/>
+              <Field label="Last name" value={data.hero.lastName} onChange={v=>change(d=>{d.hero.lastName=v;})}/>
+            </div>
+            <div className="mt-4 space-y-4">
+              <Field label="Hero description" value={data.hero.description} multiline onChange={v=>change(d=>{d.hero.description=v;})}/>
+              <Field label="Typing highlight" value={data.hero.typing} onChange={v=>change(d=>{d.hero.typing=v;})}/>
+              <Lines label="Job role chips" items={data.hero.roles} onChange={v=>change(d=>{d.hero.roles=v;})}/>
+            </div>
+          </Panel>}
+          {view==='about'&&<Panel title="About me" subtitle="Portrait remains above the animated FlowField layer. Upload a new cutout using Photo & media.">
+            <div className="space-y-4">
+              <Field label="Introduction" multiline value={data.about.intro} onChange={v=>change(d=>{d.about.intro=v;})}/>
+              <Field label="Biography (blank lines separate paragraphs)" multiline value={data.about.body} onChange={v=>change(d=>{d.about.body=v;})}/>
+              <Field label="Portrait image URL" value={data.about.photoUrl} onChange={v=>change(d=>{d.about.photoUrl=v;})}/>
+              {data.about.photoUrl&&<img src={data.about.photoUrl} alt="About preview" className="h-48 w-40 rounded-xl border border-[#36583F] bg-[#142A1F] object-contain object-bottom"/>}
+            </div>
+          </Panel>}
+          {view==='timeline'&&<Panel title="Education & career timeline" subtitle="Change the details or reorder milestones. Alternating left/right layout and curved line are preserved.">
+            <div className="space-y-4">
+              {data.timeline.items.map((item,i)=><div key={i} className="rounded-xl border border-[#254536] bg-[#10241A] p-4">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h3 className="text-sm font-semibold text-[#8DE9B5]">Milestone {i+1}</h3><Move up={()=>change(d=>{d.timeline.items=move(d.timeline.items,i,i-1);})} down={()=>change(d=>{d.timeline.items=move(d.timeline.items,i,i+1);})} remove={()=>change(d=>{d.timeline.items.splice(i,1);})}/></div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {(['year','title','organization','type','stat'] as (keyof TimelineEntry)[]).map(k=>
+                    <Field key={k} label={k} multiline={k==='stat'} value={item[k]} onChange={v=>change(d=>{d.timeline.items[i][k]=v;})}/>)}
+                </div>
+              </div>)}
+              <button type="button" className={ui.button} onClick={()=>change(d=>{d.timeline.items.push({year:'2026',title:'New milestone',organization:'',stat:'',type:'Career'});})}><Plus size={16}/> Add milestone</button>
+            </div>
+          </Panel>}
+          {view==='skills'&&<Panel title="Skills & services" subtitle="Edit cards, descriptions and skill items.">
+            <Field label="Section introduction" multiline value={data.skills.description} onChange={v=>change(d=>{d.skills.description=v;})}/>
+            <div className="mt-5 space-y-4">{data.skills.services.map((item,i)=><div key={i} className="rounded-xl border border-[#254536] bg-[#10241A] p-4">
+              <div className="mb-4 flex flex-wrap justify-between gap-3"><h3 className="font-semibold text-[#94EAB8]">Service {i+1}</h3><Move up={()=>change(d=>{d.skills.services=move(d.skills.services,i,i-1);})} down={()=>change(d=>{d.skills.services=move(d.skills.services,i,i+1);})} remove={()=>change(d=>{d.skills.services.splice(i,1);})}/></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {(['id','title','description'] as (keyof SkillEntry)[]).map(k=><Field key={k} label={k} value={String(item[k])} onChange={v=>change(d=>{(d.skills.services[i] as unknown as Record<string,string>)[k]=v;})}/>)}
+              </div>
+              <div className="mt-4"><Lines label="Skill tags" items={item.items} onChange={v=>change(d=>{d.skills.services[i].items=v;})}/></div>
+            </div>)}
+              <button className={ui.button} type="button" onClick={()=>change(d=>{d.skills.services.push({id:String(d.skills.services.length+1).padStart(2,'0'),title:'New service',description:'',items:[]});})}><Plus size={16}/> Add service</button>
+            </div>
+            <h3 className="mb-4 mt-9 border-t border-[#2C5038] pt-7 text-lg font-semibold">Tech stack cards & icons</h3>
+            <div className="space-y-4">{data.skills.stack.map((group,i)=><div key={i} className="rounded-xl border border-[#254536] bg-[#10241A] p-4">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-semibold text-[#94EAB8]">Skill group {i+1}</h4><Move up={()=>change(d=>{d.skills.stack=move(d.skills.stack,i,i-1);})} down={()=>change(d=>{d.skills.stack=move(d.skills.stack,i,i+1);})} remove={()=>change(d=>{d.skills.stack.splice(i,1);})}/></div>
+              <div className="grid gap-4 sm:grid-cols-2"><Field label="Group ID" value={group.id} onChange={v=>change(d=>{d.skills.stack[i].id=v;})}/><Field label="Group title" value={group.title} onChange={v=>change(d=>{d.skills.stack[i].title=v;})}/></div>
+              <div className="mt-4 space-y-3">{group.technologies.map((item,j)=><div key={j} className="grid gap-2 rounded-lg border border-[#294D37] p-3 sm:grid-cols-[1fr_1fr_auto]"><Field label="Skill name" value={item.name} onChange={v=>change(d=>{d.skills.stack[i].technologies[j].name=v;})}/><Field label="Icon path / URL" value={item.icon} onChange={v=>change(d=>{d.skills.stack[i].technologies[j].icon=v;})}/><button type="button" className={ui.danger} onClick={()=>change(d=>{d.skills.stack[i].technologies.splice(j,1);})}><Trash2 size={16}/></button></div>)}</div>
+              <button type="button" className={ui.button+' mt-4'} onClick={()=>change(d=>{d.skills.stack[i].technologies.push({name:'New skill',category:group.id as 'frontend',icon:'/Services/analysis.svg'});})}><Plus size={15}/> Add skill</button>
+            </div>)}
+            <button type="button" className={ui.button} onClick={()=>change(d=>{d.skills.stack.push({id:'tools',title:'MORE TOOLS',technologies:[]});})}><Plus size={15}/> Add skill group</button></div>
+          </Panel>}
+          {view==='projects'&&<Panel title="Portfolio projects" subtitle="Create, edit, reorder and remove projects. Screenshot placeholders are left unchanged until you upload real ones.">
+            <div className="mb-5 flex flex-wrap gap-2">{data.projects.items.map((p,i)=><button type="button" key={i} className={ui.button+(activeProject===i?' !bg-[#28563B] !text-[#A1FFCF]':'')} onClick={()=>setActiveProject(i)}>{p.title.slice(0,34)}</button>)}</div>
+            {project&&<div className="rounded-xl border border-[#254536] bg-[#10241A] p-4 md:p-5">
+              <div className="mb-4 flex flex-wrap justify-between gap-2"><h3 className="font-semibold text-[#96EFC0]">Project #{activeProject+1}</h3>
+                <Move up={()=>{change(d=>{d.projects.items=move(d.projects.items,activeProject,activeProject-1);});setActiveProject(Math.max(0,activeProject-1));}}
+                down={()=>{change(d=>{d.projects.items=move(d.projects.items,activeProject,activeProject+1);});setActiveProject(Math.min(data.projects.items.length-1,activeProject+1));}}
+                remove={()=>{change(d=>{d.projects.items.splice(activeProject,1);});setActiveProject(Math.max(0,activeProject-1));}}/>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {(['title','slug','type','role','description','overview','architecture','implementation','hoverImage','github','liveUrl','accent'] as (keyof Project)[])
+                  .map(k=><Field key={k} label={k} multiline={['description','overview','architecture','implementation'].includes(k)} value={String(project[k]||'')}
+                    onChange={v=>change(d=>{(d.projects.items[activeProject] as unknown as Record<string,string>)[k]=v;})}/>)}
+              </div>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {(['tech','myRole','images'] as (keyof Project)[]).map(k=>
+                  <Lines key={k} label={k} items={(project[k] as string[])||[]}
+                    onChange={v=>change(d=>{(d.projects.items[activeProject] as unknown as Record<string,string[]>)[k]=v;})}/>)}
+              </div>
+              <div className="mt-5 space-y-3"><span className={ui.label}>Project statistics</span>
+                {project.stats.map((s,i)=><div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                  <Field label="Value" value={s.value} onChange={v=>change(d=>{d.projects.items[activeProject].stats[i].value=v;})}/>
+                  <Field label="Label" value={s.label} onChange={v=>change(d=>{d.projects.items[activeProject].stats[i].label=v;})}/>
+                  <button className={ui.danger} onClick={()=>change(d=>{d.projects.items[activeProject].stats.splice(i,1);})}><Trash2 size={16}/></button>
+                </div>)}
+                <button type="button" className={ui.button} onClick={()=>change(d=>{d.projects.items[activeProject].stats.push({label:'Metric',value:'0'});})}><Plus size={15}/> Add statistic</button>
+              </div>
+            </div>}
+            <button type="button" className={ui.button+' mt-5'} onClick={()=>{change(d=>{const p=makeProject();p.slug='new-project-'+(d.projects.items.length+1);d.projects.items.push(p);});setActiveProject(data.projects.items.length);}}><Plus size={16}/> Add project</button>
+          </Panel>}
+          {view==='navigation'&&<Panel title="Header & menu links" subtitle="Anchor links must use the /#section-id format to keep smooth scrolling and transitions working.">
+            <div className="space-y-4">{data.navigation.links.map((item,i)=><div key={i} className="rounded-xl border border-[#254536] bg-[#10241A] p-4">
+              <div className="mb-3 flex justify-end"><Move up={()=>change(d=>{d.navigation.links=move(d.navigation.links,i,i-1);})} down={()=>change(d=>{d.navigation.links=move(d.navigation.links,i,i+1);})} remove={()=>change(d=>{d.navigation.links.splice(i,1);})}/></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Label" value={item.name} onChange={v=>change(d=>{d.navigation.links[i].name=v;})}/>
+                <Field label="Anchor link" value={item.href} onChange={v=>change(d=>{d.navigation.links[i].href=v;})}/>
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-sm text-[#B6CABB]"><input type="checkbox" checked={Boolean(item.menuOnly)} onChange={e=>change(d=>{d.navigation.links[i].menuOnly=e.target.checked;})}/> Show in full menu only</label>
+            </div>)}
+              <button type="button" className={ui.button} onClick={()=>change(d=>{d.navigation.links.push({name:'New link',href:'/#contact'} as MenuLink);})}><Plus size={15}/> Add link</button>
+            </div>
+          </Panel>}
+          {view==='socials'&&<Panel title="Social profile links" subtitle="Public profile URLs only. Private notification email is never stored here.">
+            <div className="space-y-4">{(['github','linkedin','instagram'] as const).map(k=>
+              <Field key={k} label={k} value={data.socials[k]} onChange={v=>change(d=>{d.socials[k]=v;})}/>)}</div>
+          </Panel>}
+          {view==='seo'&&<Panel title="Search appearance" subtitle="Set your website title and search/social description.">
+            <div className="space-y-4">
+              <Field label="Site title" value={data.seo.title} onChange={v=>change(d=>{d.seo.title=v;})}/>
+              <Field label="Meta description" multiline value={data.seo.description} onChange={v=>change(d=>{d.seo.description=v;})}/>
+            </div>
+          </Panel>}
+          {view==='theme'&&<Panel title="Brand colour" subtitle="Choose the accent used by theme-aware elements. Some artistic animations retain their original colours for consistency.">
+            <div className="flex flex-wrap items-center gap-4">
+              <input type="color" aria-label="Accent colour" value={data.theme.accent} onChange={e=>change(d=>{d.theme.accent=e.target.value;})} className="h-16 w-20 cursor-pointer rounded-xl border border-[#254536] bg-transparent p-1"/>
+              <div className="min-w-44 flex-1"><Field label="Accent hex" value={data.theme.accent} onChange={v=>change(d=>{d.theme.accent=v;})}/></div>
+            </div>
+          </Panel>}
+          {view==='media'&&<Panel title="Photos & media" subtitle="PNG, JPG or WebP under 8 MB. Your cutout portrait can be replaced here without modifying the FlowField animation.">
+            <form onSubmit={upload} className="space-y-4">
+              <label className="block"><span className={ui.label}>Use image for</span><select className={ui.input} value={uploadKind} onChange={e=>setUploadKind(e.target.value as 'photo'|'project'|'resume')}><option value="photo">About portrait</option><option value="project">Project image</option></select></label>
+              <input id="admin-file-input" className={ui.input} type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>setFile(e.target.files?.[0]||null)}/>
+              <button disabled={busy||!file} type="submit" className={ui.button}><ImagePlus size={16}/>{busy?'Uploading…':'Upload image'}</button>
+            </form>
+            {recentImage&&<div className="mt-6 space-y-3"><img alt="Recently uploaded" className="h-44 w-44 rounded-xl bg-[#16301F] object-contain" src={recentImage}/><Field label="Uploaded image URL" value={recentImage} onChange={setRecentImage}/></div>}
+          </Panel>}
+          {view==='resume'&&<Panel title="Private resume manager" subtitle="PDF is private. Uploading does NOT enable public downloads; the visitor form and alerts are paused until tomorrow.">
+            <form onSubmit={upload} className="space-y-4"><input id="admin-file-input" className={ui.input} type="file" accept="application/pdf" onChange={e=>{setFile(e.target.files?.[0]||null);setUploadKind('resume');}}/>
+              <button disabled={busy||!file} type="submit" className={ui.button}><FileText size={16}/>{busy?'Uploading…':'Upload private PDF'}</button></form>
+            <div className="mt-7 space-y-2">{resumes.length===0?<p className="text-sm text-[#9EB3A6]">No resume uploaded yet.</p>:resumes.map(r=>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-[#294A36] p-3 text-sm" key={r.id}><span className="break-all">{r.display_name}</span><span className={r.is_active?'text-[#76E8A6]':'text-[#8CA79A]'}>{r.is_active?'Current':'Older'}</span></div>)}</div>
+          </Panel>}
+          {view==='inbox'&&<Panel title="Contact inbox" subtitle="Only saved database messages appear here. Email/contact-form integration is paused; existing website emails are not imported.">
+            {messages.length===0?<p className="text-sm text-[#9EB3A6]">No saved contact messages yet.</p>:<div className="space-y-3">{messages.map(m=>
+              <article key={m.id} className="rounded-xl border border-[#264536] bg-[#10241A] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2"><b>{m.sender_name}</b><span className="text-xs text-[#9CB6A3]">{new Date(m.created_at).toLocaleString('en-IN')}</span></div>
+                <p className="mt-1 text-xs text-[#74E6A7]">{m.sender_email}</p><p className="mt-3 whitespace-pre-wrap text-sm leading-6">{m.message}</p>
+                <div className="mt-4 flex gap-2">{(['unread','read','archived'] as const).map(s=><button key={s} disabled={busy||m.status===s} className={ui.button+' !px-3 !py-1.5 !text-xs'} onClick={()=>changeMessage(m.id,s)}>{m.status===s?'✓ ':''}{s}</button>)}</div>
+              </article>)}</div>}
+          </Panel>}
+          {view==='downloads'&&<Panel title="CV download history" subtitle="This activity feed will start after we add the gated download endpoint. No download tracking is enabled yet.">
+            {downloads.length===0?<p className="text-sm text-[#9EB3A6]">No CV download records yet.</p>:<div className="overflow-x-auto"><table className="w-full min-w-[540px] text-left text-sm"><thead className="text-xs uppercase text-[#82B495]"><tr><th className="p-3">Visitor</th><th className="p-3">Company</th><th className="p-3">Contact</th><th className="p-3">Date</th></tr></thead><tbody>{downloads.map(d=><tr className="border-t border-[#254536]" key={d.id}><td className="p-3">{d.visitor_name}</td><td className="p-3">{d.company_name}</td><td className="p-3">{d.contact_email||d.contact_phone||'—'}</td><td className="p-3">{new Date(d.downloaded_at).toLocaleDateString('en-IN')}</td></tr>)}</tbody></table></div>}
+          </Panel>}
+          <p className="pb-4 text-xs leading-6 text-[#708C79]">Security: only Supabase-authorized admins can save content or access private records. Changes are read from the database after the new code is deployed. Email notifications remain paused.</p>
+        </div>
+      </div>
+    </div>
+  </main>;
+}

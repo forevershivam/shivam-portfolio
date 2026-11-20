@@ -10,13 +10,15 @@ import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import { EASE } from '@/lib/motion';
 import { FaArrowUp, FaGithub, FaExternalLinkAlt } from 'react-icons/fa';
 import { Project } from '@/lib/projects';
-import { getAdjacentProjects } from '@/lib/projects';
+
 import { site } from '@/lib/site';
 
-export default function ProjectDetails({ project }: { project: Project }) {
+export default function ProjectDetails({ project, projects }: { project: Project; projects: Project[] }) {
   const rootRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const { prev, next } = getAdjacentProjects(project.slug);
+  const projectIndex = projects.findIndex(p => p.slug === project.slug);
+  const prev = projectIndex >= 0 ? projects[(projectIndex-1+projects.length)%projects.length] : undefined;
+  const next = projectIndex >= 0 ? projects[(projectIndex+1)%projects.length] : undefined;
 
   useGSAP(
     () => {
@@ -152,6 +154,7 @@ export default function ProjectDetails({ project }: { project: Project }) {
                 <div className="pd-figure-inner absolute inset-x-0 -top-[8%] h-[116%]" style={{ willChange: 'transform' }}>
                   <Image
                     src={project.images[0]}
+                    unoptimized={(project.images[0] || '').startsWith('https://')}
                     alt={`${project.title} preview`}
                     fill
                     sizes="(max-width: 768px) 100vw, 1200px"
@@ -250,6 +253,7 @@ export default function ProjectDetails({ project }: { project: Project }) {
                       <div className="pd-figure-inner absolute inset-x-0 -top-[8%] h-[116%]" style={{ willChange: 'transform' }}>
                         <Image
                           src={img}
+                          unoptimized={img.startsWith('https://')}
                           alt={`${project.title} screenshot ${actualIdx + 1}`}
                           fill
                           sizes="(max-width: 768px) 100vw, 1100px"
