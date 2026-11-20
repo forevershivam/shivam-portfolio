@@ -1,9 +1,3 @@
-/**
- * SPDX-License-Identifier: MIT
- * See LICENSE for original and additional copyright notices.
- */
-
-
 import { Geist, Geist_Mono, Space_Grotesk, Instrument_Serif } from 'next/font/google';
 import './globals.css';
 import ClientLayout from './ClientLayout';

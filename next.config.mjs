@@ -1,9 +1,3 @@
-/**
- * SPDX-License-Identifier: MIT
- * See LICENSE for original and additional copyright notices.
- */
-
-
 const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],

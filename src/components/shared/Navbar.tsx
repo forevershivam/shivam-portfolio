@@ -10,7 +10,6 @@ import { site } from '@/lib/site';
 import { usePortfolio } from '@/components/providers/PortfolioContentProvider';
 import Link from 'next/link';
 import Lenis from 'lenis';
-import { Copyright } from 'lucide-react';
 import Magnetic from '@/components/ui/Magnetic';
 
 interface MagneticHamburgerButtonProps {
@@ -123,33 +122,18 @@ interface NavbarBrandProps {
 const NavbarBrand: React.FC<NavbarBrandProps> = ({ logoRef, handleLinkClick }) => {
   const { hero } = usePortfolio();
   return (
-    <Magnetic strength={0.3}>
-      <Link
-        ref={logoRef as any}
-        href="/#top"
-        onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick('/#top');
-        }}
-        className="group flex items-center cursor-pointer select-none py-1 text-warm"
-        aria-label={`${hero.firstName} ${hero.lastName} Home`}
-      >
-        <div className="transition-transform duration-500 ease-in-expo group-hover:rotate-[360deg] flex items-center justify-center">
-          <Copyright className="w-[18px] h-[18px]" />
-        </div>
-        <div className="relative ms-2 flex items-center whitespace-nowrap text-warm text-lg font-sans tracking-wide font-medium leading-none">
-          <span>{hero.firstName.toLowerCase()}</span>
-          <span className="relative inline-flex items-center overflow-hidden transition-all duration-500 ease-in-expo w-[32px] group-hover:w-[86px]">
-            <span className="transition-transform duration-500 ease-in-expo group-hover:-translate-x-full inline-block">
-              data
-            </span>
-            <span className="absolute left-0 ps-1.5 transition-transform duration-500 ease-in-expo translate-x-full group-hover:translate-x-0 inline-block">
-              {hero.lastName.toLowerCase()}
-            </span>
-          </span>
-        </div>
-      </Link>
-    </Magnetic>
+    <Link
+      ref={logoRef as any}
+      href="/#top"
+      onClick={(event) => {
+        event.preventDefault();
+        handleLinkClick('/#top');
+      }}
+      className="inline-flex items-center whitespace-nowrap py-1 text-lg font-semibold tracking-tight text-warm"
+      aria-label={`${hero.firstName} ${hero.lastName} Home`}
+    >
+      {hero.firstName} {hero.lastName}
+    </Link>
   );
 };
 

@@ -1,9 +1,3 @@
-/**
- * SPDX-License-Identifier: MIT
- * See LICENSE for original and additional copyright notices.
- */
-
-
 import HomeBanner from '@/components/sections/HomeBanner';
 import Projects from '@/components/sections/Projects';
 import About from '@/components/sections/About';

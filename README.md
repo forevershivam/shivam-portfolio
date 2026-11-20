@@ -15,6 +15,3 @@ Project details use verified information supplied by Shivam. Project thumbnail g
 
 Deploy on a Next.js-capable platform such as Vercel. Set `NEXT_PUBLIC_SITE_URL` to your published domain. Contact form delivery requires `RESEND_API_KEY` or `GMAIL_APP_PASSWORD` plus `CONTACT_EMAIL`. Do not commit secrets.
 
-## Attribution and license
-
-Adapted from Aitezaz Sikandar's MIT-licensed portfolio (https://github.com/aitezazdev/Portfolio). The MIT copyright and license notice are retained in `LICENSE`. The original developer is not credited in the public website UI.
